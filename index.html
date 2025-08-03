@@ -464,6 +464,12 @@
             { titulo: "4. Execução e Conexão Mente-Músculo", texto: "Priorize a técnica perfeita em cada exercício. Sinta o músculo alvo contraindo e alongando para maximizar o estímulo." }
         ];
 
+        const LIMITES_FIXOS = {
+             "Panturrilha": 2,
+             "Trapézio": 2,
+             "Antebraço": 1
+        };
+
         let gruposDisponiveis = [...new Set(EXERCICIOS.map(ex => ex.grupoMuscular))].sort();
         let diaTreinoCount = 0;
 
@@ -514,44 +520,61 @@
         }
         
         function distribuirExerciciosProporcionalmente(grupos_musculares, numTotalExercicios) {
-             const pesos = {};
-             let pesoBase = 1.0;
-             grupos_musculares.forEach((grupo, index) => {
-                 pesos[grupo] = pesoBase;
-                 pesoBase = Math.max(0.2, pesoBase - 0.2); // Garante que o peso não seja menor que 0.2
-             });
-        
-             const totalPesos = Object.values(pesos).reduce((acc, peso) => acc + peso, 0);
-             let distribuicao = {};
-             let somaDistribuicao = 0;
-        
-             grupos_musculares.forEach(grupo => {
-                 const numExercicios = Math.round((pesos[grupo] / totalPesos) * numTotalExercicios);
-                 distribuicao[grupo] = numExercicios;
-                 somaDistribuicao += numExercicios;
-             });
-        
-             let diferenca = numTotalExercicios - somaDistribuicao;
-        
-             while (diferenca !== 0) {
-                 const gruposOrdenadosPorPeso = grupos_musculares.sort((a, b) => pesos[b] - pesos[a]);
-        
-                 if (diferenca > 0) {
-                     distribuicao[gruposOrdenadosPorPeso[0]]++;
-                     diferenca--;
-                 } else {
-                     for (let i = gruposOrdenadosPorPeso.length - 1; i >= 0; i--) {
-                         const grupo = gruposOrdenadosPorPeso[i];
-                         if (distribuicao[grupo] > 0) {
-                             distribuicao[grupo]--;
-                             diferenca++;
-                             break;
-                         }
-                     }
-                 }
-             }
-        
-             return distribuicao;
+            const distribuicao = {};
+            let numTotalExerciciosRestantes = numTotalExercicios;
+            const gruposPrincipais = [];
+            
+            // 1. Aplica limites fixos aos músculos acessórios
+            grupos_musculares.forEach(grupo => {
+                if (LIMITES_FIXOS[grupo]) {
+                    distribuicao[grupo] = Math.min(LIMITES_FIXOS[grupo], numTotalExerciciosRestantes);
+                    numTotalExerciciosRestantes -= distribuicao[grupo];
+                } else {
+                    gruposPrincipais.push(grupo);
+                }
+            });
+
+            if (numTotalExerciciosRestantes > 0 && gruposPrincipais.length > 0) {
+                const pesos = {};
+                let pesoBase = 1.0;
+                gruposPrincipais.forEach((grupo, index) => {
+                    pesos[grupo] = pesoBase;
+                    pesoBase = Math.max(0.2, pesoBase - 0.2);
+                });
+                
+                const totalPesos = Object.values(pesos).reduce((acc, peso) => acc + peso, 0);
+                let somaDistribuicaoProporcional = 0;
+                
+                gruposPrincipais.forEach(grupo => {
+                    const numExercicios = Math.round((pesos[grupo] / totalPesos) * numTotalExerciciosRestantes);
+                    distribuicao[grupo] = (distribuicao[grupo] || 0) + numExercicios;
+                    somaDistribuicaoProporcional += numExercicios;
+                });
+                
+                let diferenca = numTotalExerciciosRestantes - somaDistribuicaoProporcional;
+                
+                while (diferenca !== 0) {
+                    const gruposOrdenadosPorPeso = gruposPrincipais.sort((a, b) => pesos[b] - pesos[a]);
+                    if (diferenca > 0) {
+                        distribuicao[gruposOrdenadosPorPeso[0]]++;
+                        diferenca--;
+                    } else {
+                        for (let i = gruposOrdenadosPorPeso.length - 1; i >= 0; i--) {
+                            const grupo = gruposOrdenadosPorPeso[i];
+                            if (distribuicao[grupo] > 0) {
+                                distribuicao[grupo]--;
+                                diferenca++;
+                                break;
+                            }
+                        }
+                    }
+                }
+            } else if (numTotalExerciciosRestantes > 0) {
+                 // Caso restem exercícios e não haja grupos principais para alocar
+                 // Eles simplesmente não serão alocados.
+            }
+            
+            return distribuicao;
         }
 
         function gerarTreinoAutomatico(dificuldade, grupos_musculares, sexo) {
@@ -567,11 +590,14 @@
             let exerciciosSelecionados = [];
             const familiasUtilizadas = new Set();
             
+            // Itera sobre os grupos na ordem de prioridade selecionada pelo usuário
             for (const grupo of grupos_musculares) {
+                const numParaAdicionar = distribuicaoExercicios[grupo] || 0;
+                if (numParaAdicionar === 0) continue;
+                
                 let exerciciosDisponiveis = getExerciciosParaGrupo(grupo, dificuldade, sexo);
                 shuffleArray(exerciciosDisponiveis);
                 
-                const numParaAdicionar = distribuicaoExercicios[grupo];
                 let countAdicionados = 0;
                 
                 // Prioriza exercícios de famílias que ainda não foram usadas
@@ -774,14 +800,6 @@
             
             y = doc.lastAutoTable.finalY + 10;
             
-            if (y > pageHeight - 20) {
-                doc.addPage();
-                y = 15;
-            }
-            // doc.setFontSize(16);
-            // doc.text("Finalize com alongamento estático (15-20s por músculo) para ajudar na flexibilidade.", margin, y);
-            // y += 15;
-
             doc.setFontSize(12);
             doc.setTextColor(150, 150, 150);
             doc.text(`Gerado por Your Trainer Partner para: ${dados_gerais.nome_aluno} em ${new Date().toLocaleDateString('pt-BR')}`, pageWidth / 2, doc.internal.pageSize.getHeight() - 10, { align: "center" });
