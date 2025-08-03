@@ -527,19 +527,21 @@
                  return [];
             }
             
-            // Lógica de distribuição proporcional (ajustada para respeitar a ordem de seleção)
+            // Lógica de distribuição proporcional (conforme a nova regra)
             const pesos = {};
-            if (grupos_musculares.length === 1) {
-                pesos[grupos_musculares[0]] = 1.0;
-            } else {
-                const decrescimo = grupos_musculares.length > 2 ? 0.3 : 0.4;
-                grupos_musculares.forEach((grupo, index) => {
-                    pesos[grupo] = 1.0 - (index * decrescimo);
-                });
-            }
-            
-            let totalPesos = Object.values(pesos).reduce((acc, peso) => acc + peso, 0);
+            let pesoBase = 1.0;
+            grupos_musculares.forEach((grupo, index) => {
+                if (index === 0) {
+                    pesos[grupo] = pesoBase;
+                } else {
+                    pesoBase -= 0.2;
+                    if (pesoBase < 0.2) pesoBase = 0.2; // Garante que o peso não seja muito baixo
+                    pesos[grupo] = pesoBase;
+                }
+            });
 
+            let totalPesos = Object.values(pesos).reduce((acc, peso) => acc + peso, 0);
+            
             let distribuicaoExercicios = {};
             let somaDistribuicao = 0;
             
@@ -552,8 +554,17 @@
             let diferenca = numTotalExercicios - somaDistribuicao;
             
             // Ajuste para garantir que a soma seja exata, priorizando o primeiro grupo selecionado
-            if (diferenca !== 0) {
-                 distribuicaoExercicios[grupos_musculares[0]] += diferenca;
+            while (diferenca !== 0) {
+                const gruposComMaiorPeso = grupos_musculares.filter(g => distribuicaoExercicios[g] > 0).sort((a, b) => pesos[b] - pesos[a]);
+                if (diferenca > 0) {
+                    distribuicaoExercicios[gruposComMaiorPeso[0]]++;
+                    diferenca--;
+                } else {
+                    if (distribuicaoExercicios[gruposComMaiorPeso[gruposComMaiorPeso.length - 1]] > 0) {
+                         distribuicaoExercicios[gruposComMaiorPeso[gruposComMaiorPeso.length - 1]]--;
+                    }
+                    diferenca++;
+                }
             }
             
             const familiasUtilizadas = new Set();
