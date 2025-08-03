@@ -512,41 +512,63 @@
                 (ex.genero === undefined || ex.genero === sexo)
             );
         }
-        
+
         function gerarTreinoAutomatico(dificuldade, grupos_musculares, sexo) {
             const numTotalExerciciosMap = {
                 "Iniciante": 5,
                 "Intermediario": 6,
                 "Avancado": 7
             };
-            const numTotalExercicios = numTotalExerciciosMap[dificuldade];
+            let numTotalExercicios = numTotalExerciciosMap[dificuldade];
             
             let exerciciosSelecionados = [];
-            let exerciciosPorGrupo = {};
             
-            const gruposComExercicio = grupos_musculares.length;
-            const numExercicioPorGrupo = Math.floor(numTotalExercicios / gruposComExercicio);
-            const numExercicioRestante = numTotalExercicios % gruposComExercicio;
-            
-            let gruposPrioridade = sortGruposMusculares([...grupos_musculares]);
-            
-            for (const grupo of gruposPrioridade) {
-                let exerciciosDisponiveis = getExerciciosParaGrupo(grupo, dificuldade, sexo);
-                shuffleArray(exerciciosDisponiveis);
-                exerciciosPorGrupo[grupo] = exerciciosDisponiveis;
+            if (grupos_musculares.length === 0) {
+                 return [];
             }
             
-            for (const grupo of gruposPrioridade) {
-                const numExerciciosParaAdicionar = numExercicioPorGrupo + (numExercicioRestante > 0 ? 1 : 0);
-                if (exerciciosPorGrupo[grupo] && exerciciosPorGrupo[grupo].length > 0) {
-                    for (let i = 0; i < numExerciciosParaAdicionar; i++) {
-                        if (exerciciosPorGrupo[grupo][i]) {
-                            exerciciosSelecionados.push(exerciciosPorGrupo[grupo][i]);
-                        }
+            // Lógica de distribuição proporcional
+            const pesos = {};
+            if (grupos_musculares.length === 1) {
+                pesos[grupos_musculares[0]] = 1.0;
+            } else {
+                const decrescimo = grupos_musculares.length > 2 ? 0.3 : 0.4;
+                grupos_musculares.forEach((grupo, index) => {
+                    pesos[grupo] = 1.0 - (index * decrescimo);
+                });
+            }
+            
+            let totalPesos = Object.values(pesos).reduce((acc, peso) => acc + peso, 0);
+
+            let distribuicaoExercicios = {};
+            let somaDistribuicao = 0;
+            let grupoMaiorPeso = grupos_musculares[0];
+
+            grupos_musculares.forEach(grupo => {
+                const numExercicios = Math.round((pesos[grupo] / totalPesos) * numTotalExercicios);
+                distribuicaoExercicios[grupo] = numExercicios;
+                somaDistribuicao += numExercicios;
+            });
+            
+            let diferenca = numTotalExercicios - somaDistribuicao;
+            
+            // Ajuste para garantir que a soma seja exata
+            if (diferenca !== 0) {
+                 distribuicaoExercicios[grupoMaiorPeso] += diferenca;
+            }
+
+            for (const grupo of grupos_musculares) {
+                let exerciciosDisponiveis = getExerciciosParaGrupo(grupo, dificuldade, sexo);
+                shuffleArray(exerciciosDisponiveis);
+
+                const numParaAdicionar = distribuicaoExercicios[grupo];
+                for (let i = 0; i < numParaAdicionar; i++) {
+                    if (exerciciosDisponiveis[i]) {
+                        exerciciosSelecionados.push(exerciciosDisponiveis[i]);
                     }
                 }
             }
-
+            
             exerciciosSelecionados.sort((a, b) => {
                 const ordemPredefinida = ["Peito", "Costas", "Ombro", "Glúteos", "Quadríceps", "Posterior de Coxa", "Bíceps", "Tríceps", "Panturrilha", "Trapézio", "Antebraço", "Core"];
                 return ordemPredefinida.indexOf(a.grupoMuscular) - ordemPredefinida.indexOf(b.grupoMuscular);
