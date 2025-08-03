@@ -512,6 +512,47 @@
                 (ex.genero === undefined || ex.genero === sexo)
             );
         }
+        
+        function distribuirExerciciosProporcionalmente(grupos_musculares, numTotalExercicios) {
+             const pesos = {};
+             let pesoBase = 1.0;
+             grupos_musculares.forEach((grupo, index) => {
+                 pesos[grupo] = pesoBase;
+                 pesoBase = Math.max(0.2, pesoBase - 0.2); // Garante que o peso não seja menor que 0.2
+             });
+        
+             const totalPesos = Object.values(pesos).reduce((acc, peso) => acc + peso, 0);
+             let distribuicao = {};
+             let somaDistribuicao = 0;
+        
+             grupos_musculares.forEach(grupo => {
+                 const numExercicios = Math.round((pesos[grupo] / totalPesos) * numTotalExercicios);
+                 distribuicao[grupo] = numExercicios;
+                 somaDistribuicao += numExercicios;
+             });
+        
+             let diferenca = numTotalExercicios - somaDistribuicao;
+        
+             while (diferenca !== 0) {
+                 const gruposOrdenadosPorPeso = grupos_musculares.sort((a, b) => pesos[b] - pesos[a]);
+        
+                 if (diferenca > 0) {
+                     distribuicao[gruposOrdenadosPorPeso[0]]++;
+                     diferenca--;
+                 } else {
+                     for (let i = gruposOrdenadosPorPeso.length - 1; i >= 0; i--) {
+                         const grupo = gruposOrdenadosPorPeso[i];
+                         if (distribuicao[grupo] > 0) {
+                             distribuicao[grupo]--;
+                             diferenca++;
+                             break;
+                         }
+                     }
+                 }
+             }
+        
+             return distribuicao;
+        }
 
         function gerarTreinoAutomatico(dificuldade, grupos_musculares, sexo) {
             const numTotalExerciciosMap = {
@@ -519,55 +560,13 @@
                 "Intermediario": 6,
                 "Avancado": 7
             };
-            let numTotalExercicios = numTotalExerciciosMap[dificuldade];
+            const numTotalExercicios = numTotalExerciciosMap[dificuldade];
+            
+            const distribuicaoExercicios = distribuirExerciciosProporcionalmente(grupos_musculares, numTotalExercicios);
             
             let exerciciosSelecionados = [];
-            
-            if (grupos_musculares.length === 0) {
-                 return [];
-            }
-            
-            // Lógica de distribuição proporcional (conforme a nova regra)
-            const pesos = {};
-            let pesoBase = 1.0;
-            grupos_musculares.forEach((grupo, index) => {
-                if (index === 0) {
-                    pesos[grupo] = pesoBase;
-                } else {
-                    pesoBase -= 0.2;
-                    if (pesoBase < 0.2) pesoBase = 0.2; // Garante que o peso não seja muito baixo
-                    pesos[grupo] = pesoBase;
-                }
-            });
-
-            let totalPesos = Object.values(pesos).reduce((acc, peso) => acc + peso, 0);
-            
-            let distribuicaoExercicios = {};
-            let somaDistribuicao = 0;
-            
-            grupos_musculares.forEach(grupo => {
-                const numExercicios = Math.round((pesos[grupo] / totalPesos) * numTotalExercicios);
-                distribuicaoExercicios[grupo] = numExercicios;
-                somaDistribuicao += numExercicios;
-            });
-            
-            let diferenca = numTotalExercicios - somaDistribuicao;
-            
-            // Ajuste para garantir que a soma seja exata, priorizando o primeiro grupo selecionado
-            while (diferenca !== 0) {
-                const gruposComMaiorPeso = grupos_musculares.filter(g => distribuicaoExercicios[g] > 0).sort((a, b) => pesos[b] - pesos[a]);
-                if (diferenca > 0) {
-                    distribuicaoExercicios[gruposComMaiorPeso[0]]++;
-                    diferenca--;
-                } else {
-                    if (distribuicaoExercicios[gruposComMaiorPeso[gruposComMaiorPeso.length - 1]] > 0) {
-                         distribuicaoExercicios[gruposComMaiorPeso[gruposComMaiorPeso.length - 1]]--;
-                    }
-                    diferenca++;
-                }
-            }
-            
             const familiasUtilizadas = new Set();
+            
             for (const grupo of grupos_musculares) {
                 let exerciciosDisponiveis = getExerciciosParaGrupo(grupo, dificuldade, sexo);
                 shuffleArray(exerciciosDisponiveis);
@@ -779,9 +778,9 @@
                 doc.addPage();
                 y = 15;
             }
-            doc.setFontSize(16);
-            doc.text("Finalize com alongamento estático (15-20s por músculo) para ajudar na flexibilidade.", margin, y);
-            y += 15;
+            // doc.setFontSize(16);
+            // doc.text("Finalize com alongamento estático (15-20s por músculo) para ajudar na flexibilidade.", margin, y);
+            // y += 15;
 
             doc.setFontSize(12);
             doc.setTextColor(150, 150, 150);
