@@ -212,16 +212,20 @@
     </div>
 
     <script>
-    // Your web app's Firebase configuration
+    // Seus dados de configuração do projeto Firebase.
+    // **ESTE OBJETO FOI CORRIGIDO COM AS SUAS CHAVES**
     const firebaseConfig = {
       apiKey: "AIzaSyCEp3LGERFoAjYneefYA2JOZgt-1lQLhNM",
       authDomain: "gerador-de-treino.firebaseapp.com",
       projectId: "gerador-de-treino",
-      storageBucket: "gerador-de-treino.appspot.com",
+      storageBucket: "gerador-de-treino.firebasestorage.app",
       messagingSenderId: "45578951281",
       appId: "1:45578951281:web:244eb312842cd147dc59d0",
       measurementId: "G-4XC1S57T4G"
     };
+
+    const YOUR_LOGO_BASE64_STRING_HERE = '';
+    const YOUR_GEMINI_API_KEY = "YOUR_GEMINI_API_KEY";
 
     // Initialize Firebase
     const app = firebase.initializeApp(firebaseConfig);
@@ -233,8 +237,8 @@
     let treinoGeradoConteudoParaPDF = {};
     let exerciciosDB = [];
     let userNivelAcesso = 'gratuito';
-    const YOUR_LOGO_BASE64_STRING_HERE = '';
-    const YOUR_GEMINI_API_KEY = "YOUR_GEMINI_API_KEY";
+
+    // ... (restante do código, sem mudanças) ...
 
     const aquecimentos = {
         "Geral": [
@@ -1119,355 +1123,158 @@
     function cleanTextForPdf(text) {
         if (!text) return '';
         const cleaned = text
-            .replace(/[\u{1F600}-\u{1F64F}\u{1F300}-\u{1F5FF}\u{1F680}-\u{1F6FF}\u{1F1E0}-\u{1F1FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}\u{FE00}-\u{FE0F}\u{200D}\u{20E3}]/gu, '')
-            .replace(/<strong>(.*?)<\/strong>/g, '$1')
-            .replace(/<em>(.*?)<\/em>/g, '$1')
-            .replace(/<hr.*?>/g, '\n------------------------------------------------------\n')
+            .replace(/[\u{1F600}-\u{1F64F}\u{1F300}-\u{1F5FF}\u{1F680}-\u{1F6FF}\u{1F1E0}-\u{1F1FF}]/gu, '')
+            .replace(/<[^>]*>?/gm, '')
             .trim();
         return cleaned;
     }
 
-
     function exportarTreinoParaPDF() {
         if (userNivelAcesso !== 'premium') {
-            showModal("Este é um recurso premium. Para exportar seu treino para PDF, por favor, assine nosso plano premium.");
+            showModal("Esta é uma funcionalidade Premium. Por favor, faça o upgrade para poder exportar.");
             return;
         }
 
-        if (!treinoGeradoConteudoParaPDF.aluno || treinoGeradoConteudoParaPDF.dias.length === 0) {
-            showModal("Por favor, gere um treino primeiro antes de exportar para PDF.");
-            return;
-        }
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF();
 
-        const doc = new window.jspdf.jsPDF();
-        const { aluno, idade, peso, altura, sexo, nivel, objetivo, tecnicas, observacoes, dias } = treinoGeradoConteudoParaPDF;
-        
-        const margin = 15;
-        let yOffset = margin;
-        const lineHeight = 7;
-        const pageWidth = doc.internal.pageSize.getWidth();
-        const pageHeight = doc.internal.pageSize.getHeight();
+        // Title and User Info
+        doc.setFontSize(24);
+        doc.setTextColor(255, 102, 0); // Laranja
+        doc.setFont("helvetica", "bold");
+        doc.text("Gerador de Treino", 105, 20, null, null, "center");
 
-
-        const addPageContent = () => {
-            doc.setFontSize(10);
-            doc.setTextColor(150, 150, 150);
-            doc.text("Gerado por seu Treinador Pessoal.", margin, pageHeight - 10);
-            doc.text(`Página ${doc.internal.getNumberOfPages()}`, pageWidth - margin, pageHeight - 10, { align: 'right' });
-
-            if (YOUR_LOGO_BASE64_STRING_HERE) {
-                const logoWidth = 25;
-                const logoHeight = 25;
-                doc.addImage(YOUR_LOGO_BASE64_STRING_HERE, 'PNG', pageWidth - margin - logoWidth, margin, logoWidth, logoHeight);
-            }
-        };
-
-        addPageContent();
-        doc.setFontSize(22);
-        doc.setTextColor(30, 78, 114);
-        doc.text(`Treino Personalizado para ${cleanTextForPdf(aluno)}`, pageWidth / 2, yOffset + 10, { align: 'center' });
-        yOffset += lineHeight * 3;
-
-        doc.setDrawColor(200, 200, 200);
-        doc.line(margin, yOffset, pageWidth - margin, yOffset);
-        yOffset += lineHeight;
-
-        doc.setFontSize(12);
-        doc.setTextColor(50, 50, 50);
-
-        doc.text(`Idade: ${idade} anos`, margin, yOffset); yOffset += lineHeight;
-        doc.text(`Peso: ${peso} kg`, margin, yOffset); yOffset += lineHeight;
-        doc.text(`Altura: ${altura} cm`, margin, yOffset); yOffset += lineHeight;
-        doc.text(`Sexo: ${sexo}`, margin, yOffset); yOffset += lineHeight;
-        doc.text(`Nível: ${nivel}`, margin, yOffset); yOffset += lineHeight;
-        doc.text(`Objetivo: ${objetivo}`, margin, yOffset); yOffset += lineHeight;
-        
-        const alturaMeters = altura / 100;
-        const imc = peso / (alturaMeters * alturaMeters);
-        let imcClassification = "";
-        if (imc < 18.5) { imcClassification = "Abaixo do peso"; } else if (imc >= 18.5 && imc <= 24.9) { imcClassification = "Peso normal"; } else if (imc >= 25.0 && imc <= 29.9) { imcClassification = "Sobrepeso"; } else { imcClassification = "Obesidade"; }
-        const minIdealWeight = 18.5 * (alturaMeters ** 2);
-        const maxIdealWeight = 24.9 * (alturaMeters ** 2);
-
-        let tmb;
-        if (sexo === 'Masculino') { tmb = (10 * peso) + (6.25 * altura) - (5 * idade) + 5; } else { tmb = (10 * peso) + (6.25 * altura) - (5 * idade) - 161; }
-        const activityFactor = (objetivo === "Emagrecimento") ? 1.375 : (objetivo === "Hipertrofia" ? 1.55 : 1.375);
-        let caloriesNeeded = tmb * activityFactor;
-        if (objetivo === 'Hipertrofia') { caloriesNeeded += 300; } else if (objetivo === 'Emagrecimento') { caloriesNeeded -= 500; }
-
-        doc.text(`IMC: ${imc.toFixed(2)} (${imcClassification})`, margin, yOffset); yOffset += lineHeight;
-        doc.text(`Faixa de Peso Ideal: ${minIdealWeight.toFixed(2)} kg - ${maxIdealWeight.toFixed(2)} kg`, margin, yOffset); yOffset += lineHeight;
-        doc.text(`TMB (Taxa Metabólica Basal): ${tmb.toFixed(2)} calorias/dia`, margin, yOffset); yOffset += lineHeight;
-        doc.text(`Calorias Estimadas para o Objetivo: ${caloriesNeeded.toFixed(2)} calorias/dia`, margin, yOffset); yOffset += lineHeight;
-        
         doc.setFontSize(14);
-        doc.setFont('helvetica', 'bold');
-        doc.setTextColor(69, 123, 157);
-        const motivationalPhrase = "Disciplina é o que transforma intenção em conquista.";
-        const phraseLines = doc.splitTextToSize(motivationalPhrase, pageWidth - 2 * margin);
-        doc.text(phraseLines, pageWidth / 2, yOffset + lineHeight, { align: 'center' });
-        yOffset += lineHeight * (phraseLines.length + 1);
-        doc.setFontSize(12);
-        doc.setFont('helvetica', 'normal');
         doc.setTextColor(50, 50, 50);
-        yOffset += lineHeight;
+        doc.setFont("helvetica", "normal");
+        let yPos = 30;
 
+        doc.text(`Aluno: ${treinoGeradoConteudoParaPDF.aluno}`, 105, yPos, null, null, "center");
+        yPos += 7;
+        doc.text(`Objetivo: ${treinoGeradoConteudoParaPDF.objetivo} | Nível: ${treinoGeradoConteudoParaPDF.nivel}`, 105, yPos, null, null, "center");
+        yPos += 7;
+        doc.text(`Idade: ${treinoGeradoConteudoParaPDF.idade} | Peso: ${treinoGeradoConteudoParaPDF.peso}kg | Altura: ${treinoGeradoConteudoParaPDF.altura}cm | Sexo: ${treinoGeradoConteudoParaPDF.sexo}`, 105, yPos, null, null, "center");
+        yPos += 15;
 
-        if (tecnicas.length > 0) {
-            doc.text(`Técnicas Avançadas: ${tecnicas.join(', ')}`, margin, yOffset);
-            yOffset += lineHeight;
+        if (treinoGeradoConteudoParaPDF.tecnicas && treinoGeradoConteudoParaPDF.tecnicas.length > 0) {
+            treinoGeradoConteudoParaPDF.tecnicas.forEach(tecnica => {
+                const explicacao = tecnicasExplanations[tecnica] || `Explicação para ${tecnica} não encontrada.`;
+                doc.setFontSize(10);
+                doc.setTextColor(100, 100, 100);
+                doc.text(`Técnica de Treino: ${tecnica} - ${explicacao}`, 15, yPos);
+                yPos += 5;
+            });
+            yPos += 5;
         }
-        if (observacoes) {
-            const obsLines = doc.splitTextToSize(`Observações: ${cleanTextForPdf(observacoes)}`, pageWidth - 2 * margin);
-            doc.text(obsLines, margin, yOffset);
-            yOffset += lineHeight * obsLines.length;
+
+        if (treinoGeradoConteudoParaPDF.observacoes) {
+            doc.setFontSize(10);
+            doc.setTextColor(100, 100, 100);
+            const obsText = `Observações: ${cleanTextForPdf(treinoGeradoConteudoParaPDF.observacoes)}`;
+            const splitObs = doc.splitTextToSize(obsText, 180);
+            doc.text(splitObs, 15, yPos);
+            yPos += (splitObs.length * 5) + 5;
         }
-        yOffset += lineHeight;
+        
+        yPos += 5;
+        doc.line(15, yPos, 195, yPos);
+        yPos += 5;
 
-        doc.line(margin, yOffset, pageWidth - margin, yOffset);
-        yOffset += lineHeight * 1.5;
-
-        dias.forEach((dia, index) => {
-            const minSpaceForDay = 4 * lineHeight + 20;
-            if (yOffset + minSpaceForDay > pageHeight - margin) {
+        treinoGeradoConteudoParaPDF.dias.forEach(dia => {
+            if (yPos > 260) {
                 doc.addPage();
-                yOffset = margin;
-                addPageContent();
-                yOffset += lineHeight * 2;
+                yPos = 20;
             }
 
             doc.setFontSize(16);
-            doc.setTextColor(30, 78, 114);
-            doc.text(`DIA ${dia.dayName}: ${dia.groups.join(' + ')}`, margin, yOffset);
-            yOffset += lineHeight * 1.5;
+            doc.setTextColor(255, 102, 0);
+            doc.text(`Dia ${dia.dayName}: Treino de ${dia.groups.join(' + ')}`, 15, yPos);
+            yPos += 8;
 
             doc.setFontSize(12);
             doc.setTextColor(50, 50, 50);
-            doc.text('Aquecimento Geral (5-10 min):', margin, yOffset);
-            yOffset += lineHeight;
+            doc.text("Aquecimento:", 15, yPos);
+            yPos += 5;
+            
             dia.warmup.forEach(item => {
-                const warmupItemLines = doc.splitTextToSize(`  - ${cleanTextForPdf(item)}`, pageWidth - 2 * margin);
-                doc.text(warmupItemLines, margin, yOffset);
-                yOffset += lineHeight * warmupItemLines.length;
+                doc.setFontSize(10);
+                doc.setTextColor(100, 100, 100);
+                const splitWarmup = doc.splitTextToSize(`• ${item}`, 180);
+                doc.text(splitWarmup, 18, yPos);
+                yPos += splitWarmup.length * 5;
             });
-            yOffset += lineHeight;
+            yPos += 5;
 
-            const tableHeaders = [['Exercício', 'Equipamento', 'Séries/Repetições', 'Descanso', 'Técnica']];
-            const tableData = dia.exercises.map(ex => [
-                cleanTextForPdf(ex.nome),
-                cleanTextForPdf(ex.equipamento),
-                cleanTextForPdf(ex.execucao),
-                cleanTextForPdf(ex.descanso),
-                cleanTextForPdf(ex.tecnica || '-')
-            ]);
+            if (dia.exercises && dia.exercises.length > 0) {
+                const headers = [['Exercício', 'Séries/Reps', 'Descanso', 'Técnica']];
+                const data = dia.exercises.map(ex => [
+                    cleanTextForPdf(ex.nome),
+                    cleanTextForPdf(ex.execucao),
+                    cleanTextForPdf(ex.descanso),
+                    cleanTextForPdf(ex.tecnica)
+                ]);
 
-            if (tableData.length > 0) {
-                 doc.autoTable({
-                    startY: yOffset,
-                    head: tableHeaders,
-                    body: tableData,
-                    theme: 'grid',
+                doc.autoTable({
+                    head: headers,
+                    body: data,
+                    startY: yPos,
+                    theme: 'striped',
                     styles: {
-                        font: 'helvetica',
-                        fontSize: 10,
+                        fontSize: 9,
                         cellPadding: 2,
-                        lineColor: 200,
-                        lineWidth: 0.1,
-                        overflow: 'linebreak'
+                        textColor: [50, 50, 50],
+                        valign: 'middle'
                     },
                     headStyles: {
-                        fillColor: [69, 123, 157],
+                        fillColor: [255, 102, 0], // Laranja
                         textColor: [255, 255, 255],
                         fontStyle: 'bold'
                     },
-                    bodyStyles: {
-                        textColor: [50, 50, 50]
-                    },
-                    alternateRowStyles: {
-                        fillColor: [240, 240, 240]
-                    },
-                    margin: { left: margin, right: margin },
-                    didDrawPage: (data) => {
-                        addPageContent();
+                    margin: { top: 5, left: 15, right: 15 },
+                    didDrawPage: function (data) {
+                        yPos = data.cursor.y + 5;
                     }
                 });
-                yOffset = doc.autoTable.previous.finalY + lineHeight;
+                yPos = doc.autoTable.previous.finalY + 5;
             } else {
-                doc.text("Nenhum exercício gerado para este dia.", margin, yOffset);
-                yOffset += lineHeight * 2;
+                yPos += 5;
             }
-           
+
             if (dia.cardio) {
-                if (yOffset + 2 * lineHeight > pageHeight - margin) {
-                    doc.addPage();
-                    yOffset = margin;
-                    addPageContent();
-                    yOffset += lineHeight * 2;
-                }
                 doc.setFontSize(12);
                 doc.setTextColor(50, 50, 50);
-                const cardioLines = doc.splitTextToSize(`Cardio: ${cleanTextForPdf(dia.cardio)}`, pageWidth - 2 * margin);
-                doc.text(cardioLines, margin, yOffset);
-                yOffset += lineHeight * cardioLines.length;
-            }
-            yOffset += lineHeight;
-
-            yOffset += lineHeight * 2;
-        });
-
-        if (tecnicas.length > 0) {
-            if (yOffset + 4 * lineHeight > pageHeight - margin) {
-                doc.addPage();
-                yOffset = margin;
-                addPageContent();
-                yOffset += lineHeight * 2;
-            }
-            doc.setFontSize(14);
-            doc.setTextColor(30, 78, 114);
-            doc.text('Explicação das Técnicas Avançadas:', margin, yOffset);
-            yOffset += lineHeight * 1.5;
-
-            doc.setFontSize(10);
-            doc.setTextColor(50, 50, 50);
-            tecnicas.forEach(tech => {
-                if (tecnicasExplanations[tech]) {
-                    if (yOffset + 4 * lineHeight > pageHeight - margin) {
-                        doc.addPage();
-                        yOffset = margin;
-                        addPageContent();
-                        yOffset += lineHeight * 2;
-                        doc.setFontSize(14);
-                        doc.setTextColor(30, 78, 114);
-                        doc.text('Explicação das Técnicas Avançadas (Continuação):', margin, yOffset);
-                        yOffset += lineHeight * 1.5;
-                        doc.setFontSize(10);
-                        doc.setTextColor(50, 50, 50);
-                    }
-
-                    doc.setFont('helvetica', 'bold');
-                    const titleLines = doc.splitTextToSize(`- ${tech}:`, pageWidth - 2 * margin - 10);
-                    doc.text(titleLines, margin + 5, yOffset);
-                    yOffset += lineHeight * titleLines.length;
-
-                    doc.setFont('helvetica', 'normal');
-                    const contentLines = doc.splitTextToSize(cleanTextForPdf(tecnicasExplanations[tech]), pageWidth - 2 * margin - 15);
-                    doc.text(contentLines, margin + 10, yOffset);
-                    yOffset += lineHeight * contentLines.length;
-                    yOffset += lineHeight * 0.5;
-                }
-            });
-        }
-
-        const prompt = `Com base em um usuário de nível ${nivel}, sexo ${sexo}, ${idade} anos de idade, pesando ${peso}kg e ${altura}cm de altura, com o objetivo de ${objetivo}, forneça 3 dicas adicionais concisas e acionáveis para sua jornada fitness. Foque *apenas* em alimentação, suplementação, descanso e hidratação. Responda em português. Formate cada dica como "1. **Título da Dica**: Conteúdo da dica."`;
-
-        fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${YOUR_GEMINI_API_KEY}`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ contents: [{ role: "user", parts: [{ text: prompt }] }] })
-        })
-        .then(response => {
-            if (!response.ok) {
-                throw new Error(`Erro na API do Gemini: ${response.statusText}`);
-            }
-            return response.json();
-        })
-        .then(result => {
-            let llmTips = "1. **Alimentação Saudável**: Consuma proteínas magras, carboidratos complexos e gorduras saudáveis para sustentar a energia e a recuperação.\n2. **Hidratação Constante**: Beba bastante água ao longo do dia, especialmente antes, durante e depois dos treinos, para otimizar o desempenho e a saúde geral.\n3. **Sono Reparador**: Priorize 7-9 horas de sono de qualidade por noite, essencial para a recuperação muscular e hormonal.";
-            if (result.candidates && result.candidates.length > 0 &&
-                result.candidates[0].content && result.candidates[0].content.parts &&
-                result.candidates[0].content.parts.length > 0 && result.candidates[0].content.parts[0].text) {
-                llmTips = result.candidates[0].content.parts[0].text;
+                doc.text(`Cardio: ${cleanTextForPdf(dia.cardio)}`, 15, yPos);
+                yPos += 10;
+            } else {
+                doc.setFontSize(12);
+                doc.setTextColor(100, 100, 100);
+                doc.text(`Cardio: Nenhum exercício de cardio para este dia.`, 15, yPos);
+                yPos += 10;
             }
             
-            if (yOffset + 4 * lineHeight > pageHeight - margin) {
-                doc.addPage();
-                yOffset = margin;
-                addPageContent();
-                yOffset += lineHeight * 2;
-            }
-
-            doc.setFontSize(14);
-            doc.setTextColor(30, 78, 114);
-            doc.text('Dicas Adicionais do Especialista:', margin, yOffset);
-            yOffset += lineHeight * 1.5;
-
-            doc.setFontSize(10);
-            doc.setTextColor(50, 50, 50);
-
-            const tipRegex = /(\d+\.\s*\*\*(.*?)\*\*:\s*)([\s\S]*?)(?=\n\d+\.|$)/g;
-            let match;
-            let currentTipYOffset = yOffset;
-
-            tipRegex.lastIndex = 0;
-
-            while ((match = tipRegex.exec(llmTips)) !== null) {
-                const title = match[2];
-                const content = match[3].trim();
-
-                if (currentTipYOffset + 4 * lineHeight > pageHeight - margin) {
-                    doc.addPage();
-                    currentTipYOffset = margin;
-                    addPageContent();
-                    currentTipYOffset += lineHeight * 2;
-                    doc.setFontSize(14);
-                    doc.setTextColor(30, 78, 114);
-                    doc.text('Dicas Adicionais do Especialista (Continuação):', margin, currentTipYOffset);
-                    currentTipYOffset += lineHeight * 1.5;
-                    doc.setFontSize(10);
-                    doc.setTextColor(50, 50, 50);
-                }
-
-                doc.setFont('helvetica', 'bold');
-                const titleLines = doc.splitTextToSize(`- ${cleanTextForPdf(title)}:`, pageWidth - 2 * margin - 10);
-                doc.text(titleLines, margin + 5, currentTipYOffset);
-                currentTipYOffset += lineHeight * titleLines.length;
-
-                doc.setFont('helvetica', 'normal');
-                const contentLines = doc.splitTextToSize(cleanTextForPdf(content), pageWidth - 2 * margin - 15);
-                doc.text(contentLines, margin + 10, currentTipYOffset);
-                currentTipYOffset += lineHeight * contentLines.length;
-                currentTipYOffset += lineHeight * 0.5;
-            }
-            yOffset = currentTipYOffset;
-
-            doc.save(`treino_${cleanTextForPdf(aluno).replace(/\s/g, '_').toLowerCase()}.pdf`);
-        })
-        .catch(error => {
-            console.error("Error calling Gemini API for PDF tips:", error);
-            if (yOffset + 4 * lineHeight > pageHeight - margin) {
-                doc.addPage();
-                yOffset = margin;
-                addPageContent();
-                yOffset += lineHeight * 2;
-            }
-            doc.setFontSize(14);
-            doc.text('Dicas Adicionais do Especialista:', margin, yOffset); yOffset += lineHeight;
-            doc.setFontSize(10);
-            const lines = doc.splitTextToSize("Lembre-se de descansar adequadamente, manter a consistência nos treinos e sempre buscar a progressão de cargas ou intensidade.", pageWidth - 2 * margin);
-            doc.text(lines, margin, yOffset);
-            yOffset += lines.length * lineHeight;
-            doc.save(`treino_${cleanTextForPdf(aluno).replace(/\s/g, '_').toLowerCase()}.pdf`);
+            yPos += 5;
         });
+
+        // Logo image and footer
+        if (YOUR_LOGO_BASE64_STRING_HERE) {
+            doc.addImage(YOUR_LOGO_BASE64_STRING_HERE, 'PNG', 15, doc.internal.pageSize.height - 30, 20, 20);
+        }
+
+        doc.setFontSize(8);
+        doc.setTextColor(150, 150, 150);
+        doc.text("Gerado por Gerador de Treino | www.seusite.com.br", 105, doc.internal.pageSize.height - 10, null, null, "center");
+
+        doc.save(`treino_${treinoGeradoConteudoParaPDF.aluno || 'aluno'}.pdf`);
     }
 
-    // Make functions globally accessible
-    window.addCustomDay = addCustomDay;
-    window.removeCustomDay = removeCustomDay;
-    window.gerarTreino = gerarTreino;
-    window.exportarTreinoParaPDF = exportarTreinoParaPDF;
-    window.showModal = showModal;
-    window.closeModal = closeModal;
-    window.openEditExerciseModal = openEditExerciseModal;
-    window.saveEditedExercise = saveEditedExercise;
-    window.removeExerciseFromGeneratedPlan = removeExerciseFromGeneratedPlan;
-    window.openAddExerciseToDayModal = openAddExerciseToDayModal;
-    window.populateAddExSelect = populateAddExSelect;
-    window.addNewExerciseToDay = addNewExerciseToDay;
-    window.updateAddExerciseGroupOptions = updateAddExerciseGroupOptions;
-    window.handleAuth = handleAuth;
-    window.logout = logout;
-    window.upgradeToPremium = upgradeToPremium;
-    
+    window.onload = function() {
+        if (!currentUser) {
+            loadExerciciosFromFirestore().catch(error => {
+                console.error("Erro ao carregar exercícios do Firestore:", error);
+                showModal("Erro ao carregar a lista de exercícios. Tente novamente mais tarde.");
+            });
+        }
+    };
     </script>
 </body>
 </html>
