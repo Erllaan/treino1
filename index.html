@@ -7,11 +7,7 @@
     <link rel="icon" type="image/png" href="https://upload.wikimedia.org/wikipedia/commons/thumb/c/c5/Wrench.svg/1200px-Wrench.svg.png">
     
     <script src="https://cdn.tailwindcss.com"></script>
-
-    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
-
+    
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
 </head>
@@ -211,9 +207,13 @@
         </div>
     </div>
 
-    <script>
+    <script type="module">
+    // 👇️ IMPORTAÇÕES DO FIREBASE V12
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js";
+    import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js";
+    import { getFirestore, collection, doc, getDoc, getDocs, setDoc, updateDoc } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
+
     // Seus dados de configuração do projeto Firebase.
-    // **ESTE OBJETO FOI CORRIGIDO COM AS SUAS CHAVES**
     const firebaseConfig = {
       apiKey: "AIzaSyCEp3LGERFoAjYneefYA2JOZgt-1lQLhNM",
       authDomain: "gerador-de-treino.firebaseapp.com",
@@ -227,10 +227,10 @@
     const YOUR_LOGO_BASE64_STRING_HERE = '';
     const YOUR_GEMINI_API_KEY = "YOUR_GEMINI_API_KEY";
 
-    // Initialize Firebase
-    const app = firebase.initializeApp(firebaseConfig);
-    const auth = firebase.auth();
-    const db = firebase.firestore();
+    // 👇️ INICIALIZAÇÃO DO FIREBASE V12
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
 
     let currentUser = null;
     let generatedTrainingPlan = [];
@@ -364,7 +364,8 @@
     }
 
     // --- Firebase Authentication ---
-    auth.onAuthStateChanged(user => {
+    // 👇️ NOVO: onAuthStateChanged usando a sintaxe de módulo
+    onAuthStateChanged(auth, (user) => {
         if (user) {
             currentUser = user;
             document.getElementById('authContainer').style.display = 'none';
@@ -388,8 +389,9 @@
 
     async function loadExerciciosFromFirestore() {
         try {
-            const snapshot = await db.collection('exercicios').get();
-            exerciciosDB = snapshot.docs.map(doc => doc.data());
+            // 👇️ NOVO: Usando a sintaxe de módulo do Firestore
+            const querySnapshot = await getDocs(collection(db, "exercicios"));
+            exerciciosDB = querySnapshot.docs.map(doc => doc.data());
             console.log(`Carregados ${exerciciosDB.length} exercícios do Firestore.`);
         } catch (error) {
             console.error("Erro ao carregar exercícios do Firestore:", error);
@@ -408,16 +410,18 @@
         }
 
         try {
-            // Try to sign in
-            await auth.signInWithEmailAndPassword(email, password);
+            // 👇️ NOVO: signInWithEmailAndPassword usando a sintaxe de módulo
+            await signInWithEmailAndPassword(auth, email, password);
             authMessage.innerText = "Login realizado com sucesso!";
         } catch (error) {
             // If sign in fails, try to create an account
             if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password') {
                 try {
-                    const userCredential = await auth.createUserWithEmailAndPassword(email, password);
+                    // 👇️ NOVO: createUserWithEmailAndPassword usando a sintaxe de módulo
+                    const userCredential = await createUserWithEmailAndPassword(auth, email, password);
                     // NOVO CÓDIGO AQUI: Adiciona o campo 'nivelAcesso' para novos usuários
-                    await db.collection('users').doc(userCredential.user.uid).set({
+                    // 👇️ NOVO: setDoc usando a sintaxe de módulo
+                    await setDoc(doc(db, 'users', userCredential.user.uid), {
                         email: email,
                         nivelAcesso: 'gratuito'
                     }, { merge: true });
@@ -434,7 +438,8 @@
 
     async function logout() {
         try {
-            await auth.signOut();
+            // 👇️ NOVO: signOut usando a sintaxe de módulo
+            await signOut(auth);
             showModal("Você foi desconectado.");
         } catch (error) {
             console.error("Erro ao fazer logout:", error);
@@ -471,7 +476,8 @@
         });
         
         try {
-            await db.collection('users').doc(currentUser.uid).set({
+            // 👇️ NOVO: setDoc usando a sintaxe de módulo
+            await setDoc(doc(db, 'users', currentUser.uid), {
                 nomeAluno, idade, peso, altura, sexo, nivel, objetivo,
                 equipamentos, tecnicas, observacoes, customDaysData,
                 generatedTrainingPlan
@@ -490,9 +496,12 @@
         }
 
         try {
-            const doc = await db.collection('users').doc(currentUser.uid).get();
-            if (doc.exists) {
-                const data = doc.data();
+            // 👇️ NOVO: getDoc usando a sintaxe de módulo
+            const userDocRef = doc(db, 'users', currentUser.uid);
+            const docSnap = await getDoc(userDocRef);
+
+            if (docSnap.exists()) {
+                const data = docSnap.data();
                 userNivelAcesso = data.nivelAcesso || 'gratuito';
                 const exportPdfButton = document.getElementById('exportPdfButton');
                 const upgradePremiumButton = document.getElementById('upgradePremiumButton');
@@ -568,7 +577,9 @@
         }
 
         try {
-            await db.collection('users').doc(currentUser.uid).update({
+            // 👇️ NOVO: updateDoc usando a sintaxe de módulo
+            const userDocRef = doc(db, 'users', currentUser.uid);
+            await updateDoc(userDocRef, {
                 nivelAcesso: 'premium'
             });
             showModal("Parabéns! Seu plano foi atualizado para Premium (Simulação). Agora você pode exportar seus treinos para PDF!");
@@ -1267,14 +1278,8 @@
         doc.save(`treino_${treinoGeradoConteudoParaPDF.aluno || 'aluno'}.pdf`);
     }
 
-    window.onload = function() {
-        if (!currentUser) {
-            loadExerciciosFromFirestore().catch(error => {
-                console.error("Erro ao carregar exercícios do Firestore:", error);
-                showModal("Erro ao carregar a lista de exercícios. Tente novamente mais tarde.");
-            });
-        }
-    };
+    // A função de onload foi removida e a inicialização de dados foi movida
+    // para a verificação de estado de autenticação para garantir que o Firebase esteja pronto.
     </script>
 </body>
 </html>
