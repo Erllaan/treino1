@@ -1,1285 +1,1864 @@
 <!DOCTYPE html>
-<html lang="pt-br">
+<html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gerador de Treino</title>
-    <link rel="icon" type="image/png" href="https://upload.wikimedia.org/wikipedia/commons/thumb/c/c5/Wrench.svg/1200px-Wrench.svg.png">
-    
-    <script src="https://cdn.tailwindcss.com"></script>
-    
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
-</head>
-<body class="bg-gray-900 text-white font-sans flex flex-col items-center min-h-screen p-4">
-    <header class="w-full max-w-4xl text-center py-6 border-b border-gray-700">
-        <h1 class="text-4xl font-extrabold text-orange-500">Gerador de Treino</h1>
-        <p id="userInfoDisplay" class="mt-2 text-lg text-gray-400"></p>
-    </header>
+    <title>Your Trainer Partner</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap');
 
-    <main class="w-full max-w-4xl mt-8">
-
-        <div id="authContainer" class="bg-gray-800 p-6 rounded-lg shadow-xl mb-8" style="display: none;">
-            <h2 class="text-2xl font-bold mb-4 text-center text-orange-400">Entre ou Crie Sua Conta</h2>
-            <div class="mb-4">
-                <label for="authEmail" class="block text-gray-300">Email</label>
-                <input type="email" id="authEmail" class="w-full bg-gray-700 text-white p-2 rounded-md mt-1" placeholder="seuemail@exemplo.com">
-            </div>
-            <div class="mb-6">
-                <label for="authPassword" class="block text-gray-300">Senha</label>
-                <input type="password" id="authPassword" class="w-full bg-gray-700 text-white p-2 rounded-md mt-1" placeholder="Sua Senha">
-            </div>
-            <button onclick="handleAuth()" class="w-full bg-orange-600 hover:bg-orange-700 text-white font-bold py-2 px-4 rounded-lg transition duration-200">
-                Login / Criar Conta
-            </button>
-            <p id="authMessage" class="mt-4 text-center text-red-400"></p>
-        </div>
-
-        <div id="appContent" style="display: none;">
-            
-            <div class="flex flex-col sm:flex-row justify-between items-center mb-6 gap-4">
-                <button id="logoutButton" onclick="logout()" class="w-full sm:w-auto bg-gray-700 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded-lg transition duration-200" style="display: none;">
-                    Logout
-                </button>
-                <button id="upgradePremiumButton" onclick="upgradeToPremium()" class="w-full sm:w-auto bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg transition duration-200" style="display: none;">
-                    Tornar-se Premium (Simulação)
-                </button>
-            </div>
-            
-            <div class="bg-gray-800 p-6 rounded-lg shadow-xl">
-                <h2 class="text-2xl font-bold mb-4 text-orange-400">Dados do Aluno</h2>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                        <label for="nomeAluno" class="block text-gray-300">Nome do Aluno</label>
-                        <input type="text" id="nomeAluno" class="w-full bg-gray-700 text-white p-2 rounded-md mt-1">
-                    </div>
-                    <div>
-                        <label for="idade" class="block text-gray-300">Idade</label>
-                        <input type="number" id="idade" class="w-full bg-gray-700 text-white p-2 rounded-md mt-1">
-                    </div>
-                    <div>
-                        <label for="peso" class="block text-gray-300">Peso (kg)</label>
-                        <input type="number" id="peso" step="0.1" class="w-full bg-gray-700 text-white p-2 rounded-md mt-1">
-                    </div>
-                    <div>
-                        <label for="altura" class="block text-gray-300">Altura (cm)</label>
-                        <input type="number" id="altura" class="w-full bg-gray-700 text-white p-2 rounded-md mt-1">
-                    </div>
-                    <div>
-                        <label for="sexo" class="block text-gray-300">Sexo</label>
-                        <select id="sexo" class="w-full bg-gray-700 text-white p-2 rounded-md mt-1">
-                            <option value="Masculino">Masculino</option>
-                            <option value="Feminino">Feminino</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label for="nivel" class="block text-gray-300">Nível</label>
-                        <select id="nivel" class="w-full bg-gray-700 text-white p-2 rounded-md mt-1">
-                            <option value="Iniciante">Iniciante</option>
-                            <option value="Intermediario">Intermediário</option>
-                            <option value="Avancado">Avançado</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label for="objetivo" class="block text-gray-300">Objetivo</label>
-                        <select id="objetivo" class="w-full bg-gray-700 text-white p-2 rounded-md mt-1">
-                            <option value="Hipertrofia">Hipertrofia</option>
-                            <option value="Emagrecimento">Emagrecimento</option>
-                            <option value="Resistencia">Resistência</option>
-                        </select>
-                    </div>
-                </div>
-            </div>
-
-            <div class="bg-gray-800 p-6 rounded-lg shadow-xl mt-6">
-                <h2 class="text-2xl font-bold mb-4 text-orange-400">Equipamentos Disponíveis</h2>
-                <div id="equipamentos" class="flex flex-wrap gap-4">
-                    <div class="flex items-center"><input type="checkbox" id="equi-livre" value="Peso Livre" checked class="form-checkbox h-5 w-5 text-orange-600"><label for="equi-livre" class="ml-2">Peso Livre (Barras, Halteres)</label></div>
-                    <div class="flex items-center"><input type="checkbox" id="equi-maquinas" value="Máquinas" checked class="form-checkbox h-5 w-5 text-orange-600"><label for="equi-maquinas" class="ml-2">Máquinas</label></div>
-                    <div class="flex items-center"><input type="checkbox" id="equi-cabos" value="Cabos" checked class="form-checkbox h-5 w-5 text-orange-600"><label for="equi-cabos" class="ml-2">Cabos</label></div>
-                    <div class="flex items-center"><input type="checkbox" id="equi-faixa" value="Faixa Elástica" class="form-checkbox h-5 w-5 text-orange-600"><label for="equi-faixa" class="ml-2">Faixa Elástica</label></div>
-                    <div class="flex items-center"><input type="checkbox" id="equi-peso-corporal" value="Peso Corporal" checked class="form-checkbox h-5 w-5 text-orange-600"><label for="equi-peso-corporal" class="ml-2">Peso Corporal</label></div>
-                    <div class="flex items-center"><input type="checkbox" id="equi-outros" value="Outros" class="form-checkbox h-5 w-5 text-orange-600"><label for="equi-outros" class="ml-2">Outros</label></div>
-                </div>
-            </div>
-
-            <div class="bg-gray-800 p-6 rounded-lg shadow-xl mt-6">
-                <h2 class="text-2xl font-bold mb-4 text-orange-400">Técnicas de Treino (Opcional)</h2>
-                <div id="tecnicas" class="flex flex-wrap gap-4">
-                    <div class="flex items-center"><input type="checkbox" id="tech-drop" value="Drop Set" class="form-checkbox h-5 w-5 text-orange-600"><label for="tech-drop" class="ml-2">Drop Set</label></div>
-                    <div class="flex items-center"><input type="checkbox" id="tech-bi" value="Bi-set" class="form-checkbox h-5 w-5 text-orange-600"><label for="tech-bi" class="ml-2">Bi-set</label></div>
-                    <div class="flex items-center"><input type="checkbox" id="tech-superset" value="Superset" class="form-checkbox h-5 w-5 text-orange-600"><label for="tech-superset" class="ml-2">Superset</label></div>
-                    <div class="flex items-center"><input type="checkbox" id="tech-fst7" value="FST-7" class="form-checkbox h-5 w-5 text-orange-600"><label for="tech-fst7" class="ml-2">FST-7</label></div>
-                    <div class="flex items-center"><input type="checkbox" id="tech-rest" value="Rest-Pause" class="form-checkbox h-5 w-5 text-orange-600"><label for="tech-rest" class="ml-2">Rest-Pause</label></div>
-                </div>
-            </div>
-
-            <div class="bg-gray-800 p-6 rounded-lg shadow-xl mt-6">
-                <h2 class="text-2xl font-bold mb-4 text-orange-400">Divisão do Treino</h2>
-                <p class="text-gray-400 mb-4">Selecione os grupos musculares para cada dia de treino.</p>
-                <div id="customDaysContainer">
-                    </div>
-                <button type="button" onclick="addCustomDay()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg mt-4 transition duration-200">
-                    Adicionar Dia de Treino
-                </button>
-            </div>
-            
-            <div class="bg-gray-800 p-6 rounded-lg shadow-xl mt-6">
-                <h2 class="text-2xl font-bold mb-4 text-orange-400">Observações</h2>
-                <textarea id="observacoes" rows="4" class="w-full bg-gray-700 text-white p-2 rounded-md mt-1" placeholder="Adicione observações importantes sobre o aluno..."></textarea>
-            </div>
-            
-            <button onclick="gerarTreino()" class="w-full bg-orange-600 hover:bg-orange-700 text-white font-bold py-3 px-6 rounded-lg mt-6 text-xl transition duration-200">
-                Gerar Treino
-            </button>
-            
-            <button id="exportPdfButton" onclick="exportarTreinoParaPDF()" class="w-full bg-gray-500 hover:bg-gray-600 text-white font-bold py-3 px-6 rounded-lg mt-4 text-xl transition duration-200" disabled>
-                Exportar para PDF (Premium)
-            </button>
-
-            <div id="resultado" class="mt-8 p-6 bg-gray-800 rounded-lg shadow-xl">
-                <h2 class="text-2xl font-bold mb-4 text-orange-400">Treino Gerado</h2>
-                <p class="text-gray-400">Seu treino aparecerá aqui após ser gerado.</p>
-            </div>
-        </div>
-    </main>
-
-    <div id="genericModal" class="fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center p-4" style="display: none;">
-        <div class="bg-gray-800 rounded-lg p-6 w-full max-w-sm text-center shadow-2xl">
-            <p id="modalMessage" class="text-lg font-semibold mb-4 text-white"></p>
-            <button onclick="closeModal()" class="bg-orange-600 hover:bg-orange-700 text-white font-bold py-2 px-4 rounded-lg transition duration-200">
-                Fechar
-            </button>
-        </div>
-    </div>
-
-    <div id="editExerciseModal" class="fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center p-4" style="display: none;">
-        <div class="bg-gray-800 rounded-lg p-6 w-full max-w-md shadow-2xl">
-            <h3 class="text-xl font-bold mb-4 text-orange-400">Editar Exercício</h3>
-            <div class="mb-3">
-                <label for="editExName" class="block text-gray-300">Nome do Exercício</label>
-                <input type="text" id="editExName" class="w-full bg-gray-700 text-white p-2 rounded-md mt-1">
-            </div>
-            <div class="mb-3">
-                <label for="editExSetsReps" class="block text-gray-300">Séries e Repetições (ex: 3x12)</label>
-                <input type="text" id="editExSetsReps" class="w-full bg-gray-700 text-white p-2 rounded-md mt-1">
-            </div>
-            <div class="mb-3">
-                <label for="editExRest" class="block text-gray-300">Descanso (segundos)</label>
-                <input type="number" id="editExRest" class="w-full bg-gray-700 text-white p-2 rounded-md mt-1">
-            </div>
-            <div class="mb-4">
-                <label for="editExTechnique" class="block text-gray-300">Técnica (Opcional)</label>
-                <input type="text" id="editExTechnique" class="w-full bg-gray-700 text-white p-2 rounded-md mt-1">
-            </div>
-            <div class="flex justify-end gap-2">
-                <button onclick="saveEditedExercise()" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg transition duration-200">
-                    Salvar
-                </button>
-                <button onclick="closeModal('editExerciseModal')" class="bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded-lg transition duration-200">
-                    Cancelar
-                </button>
-            </div>
-        </div>
-    </div>
-
-    <div id="addExerciseToDayModal" class="fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center p-4" style="display: none;">
-        <div class="bg-gray-800 rounded-lg p-6 w-full max-w-md shadow-2xl">
-            <h3 class="text-xl font-bold mb-4 text-orange-400">Adicionar Exercício ao Dia</h3>
-            <div class="mb-3">
-                <label for="addExMuscleGroup" class="block text-gray-300">Grupo Muscular</label>
-                <select id="addExMuscleGroup" onchange="updateAddExerciseGroupOptions()" class="w-full bg-gray-700 text-white p-2 rounded-md mt-1">
-                </select>
-            </div>
-            <div class="mb-4">
-                <label for="addExSelect" class="block text-gray-300">Exercício</label>
-                <select id="addExSelect" class="w-full bg-gray-700 text-white p-2 rounded-md mt-1">
-                </select>
-            </div>
-            <div class="flex justify-end gap-2">
-                <button onclick="addNewExerciseToDay()" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg transition duration-200">
-                    Adicionar
-                </button>
-                <button onclick="closeModal('addExerciseToDayModal')" class="bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded-lg transition duration-200">
-                    Cancelar
-                </button>
-            </div>
-        </div>
-    </div>
-
-    <script type="module">
-    // 👇️ IMPORTAÇÕES DO FIREBASE V12
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js";
-    import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js";
-    import { getFirestore, collection, doc, getDoc, getDocs, setDoc, updateDoc } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
-
-    // Seus dados de configuração do projeto Firebase.
-    const firebaseConfig = {
-      apiKey: "AIzaSyCEp3LGERFoAjYneefYA2JOZgt-1lQLhNM",
-      authDomain: "gerador-de-treino.firebaseapp.com",
-      projectId: "gerador-de-treino",
-      storageBucket: "gerador-de-treino.firebasestorage.app",
-      messagingSenderId: "45578951281",
-      appId: "1:45578951281:web:244eb312842cd147dc59d0",
-      measurementId: "G-4XC1S57T4G"
-    };
-
-    const YOUR_LOGO_BASE64_STRING_HERE = '';
-    const YOUR_GEMINI_API_KEY = "YOUR_GEMINI_API_KEY";
-
-    // 👇️ INICIALIZAÇÃO DO FIREBASE V12
-    const app = initializeApp(firebaseConfig);
-    const auth = getAuth(app);
-    const db = getFirestore(app);
-
-    let currentUser = null;
-    let generatedTrainingPlan = [];
-    let treinoGeradoConteudoParaPDF = {};
-    let exerciciosDB = [];
-    let userNivelAcesso = 'gratuito';
-
-    // ... (restante do código, sem mudanças) ...
-
-    const aquecimentos = {
-        "Geral": [
-            "5-10 minutos de cardio leve (esteira, bicicleta, elíptico)",
-            "Mobilidade articular (círculos com braços, rotação de tronco, flexão de quadril)",
-            "Alongamento dinâmico (leg swings, arm circles)"
-        ],
-        "Peito": [
-            "Rotação de ombros",
-            "Flexões de braço leves (em joelhos se necessário)",
-            "Alongamento de peitoral na parede"
-        ],
-        "Costas": [
-            "Remada baixa com elástico ou peso leve",
-            "Alongamento de grande dorsal",
-            "Ativação escapular"
-        ],
-        "Pernas": [
-            "Agachamento sem peso",
-            "Elevação de joelhos",
-            "Alongamento de isquiotibiais e quadríceps"
-        ],
-        "Glúteos": [
-            "Ponte de glúteos",
-            "Caminhada lateral com faixa elástica",
-            "Alongamento de flexores do quadril"
-        ],
-        "Ombros": [
-            "Círculos com braços pequenos e grandes",
-            "Rotação interna/externa com elástico",
-            "Elevação lateral com peso muito leve"
-        ],
-        "Bíceps": [
-            "Rotação de punhos",
-            "Rosca direta com peso muito leve",
-            "Alongamento suave de bíceps"
-        ],
-        "Tríceps": [
-            "Extensão de tríceps com peso muito leve",
-            "Alongamento de tríceps",
-            "Rotação de ombros"
-        ],
-        "Abdômen": [
-            "Rotação de tronco",
-            "Prancha leve (20-30 segundos)",
-            "Alongamento de cobra"
-        ],
-        "Panturrilhas": [
-            "Elevação de panturrilhas sem peso",
-            "Alongamento de panturrilhas na parede"
-        ],
-        "Lombar": [
-            "Gato-Camelo",
-            "Rotação lombar deitado",
-            "Extensão lombar suave"
-        ]
-    };
-
-    const cardioExercises = {
-        "Iniciante": [
-            { nome: "Caminhada Rápida (30 min)", duracao: 30 },
-            { nome: "Bicicleta Ergométrica (25 min, ritmo moderado)", duracao: 25 },
-            { nome: "Elíptico (25 min, ritmo moderado)", duracao: 25 }
-        ],
-        "Intermediario": [
-            { nome: "Corrida Moderada (20-30 min)", duracao: 20 },
-            { nome: "Natação (25-35 min)", duracao: 25 },
-            { nome: "Escada (20 min, ritmo constante)", duracao: 20 },
-            { nome: "HIIT na esteira (15-20 min, 1:2 trabalho/descanso)", duracao: 15 }
-        ],
-        "Avancado": [
-            { nome: "Corrida Intensa (30-45 min)", duracao: 30 },
-            { nome: "HIIT (15-20 min, 1:1 ou 2:1 trabalho/descanso)", duracao: 15 },
-            { nome: "Pular Corda (20-30 min, variações)", duracao: 20 },
-            { nome: "Remo (25-35 min, alta intensidade)", duracao: 25 }
-        ]
-    };
-
-    const tecnicasExplanations = {
-        "Drop Set": "Após atingir a falha em uma série, diminua o peso em 20-30% e continue até a falha novamente. Repita por 2-3 'quedas' de peso.",
-        "Bi-set": "Realize dois exercícios diferentes para o mesmo grupo muscular (ou grupos musculares sinergistas) um após o outro, sem descanso entre eles. Descanse após ambos.",
-        "Superset": "Realize dois exercícios para grupos musculares ANTAGONISTAS (ex: bíceps e tríceps, peito e costas) um após o outro, sem descanso. Descanse após ambos.",
-        "FST-7": "No final do treino de um grupo muscular, faça 7 séries com 30-45 segundos de descanso entre cada uma, usando um peso moderado para atingir a falha ou próximo dela em cada série.",
-        "Rest-Pause": "Faça uma série até a falha ou perto dela, descanse por 10-20 segundos, e então faça mais algumas repetições com o mesmo peso até a falha novamente. Repita 1-2 vezes."
-    };
-
-    function getSeriesRepeticoes(objetivo, nivel) {
-        let series, reps;
-
-        switch (objetivo) {
-            case "Hipertrofia":
-                series = Math.floor(Math.random() * 2) + 3; // 3 ou 4 séries
-                if (nivel === "Iniciante") reps = "10-15";
-                else if (nivel === "Intermediario") reps = "8-12";
-                else reps = "6-10";
-                break;
-            case "Emagrecimento":
-                series = Math.floor(Math.random() * 2) + 3; // 3 ou 4 séries
-                if (nivel === "Iniciante") reps = "12-18";
-                else if (nivel === "Intermediario") reps = "15-20";
-                else reps = "15-25";
-                break;
-            case "Resistencia":
-                series = Math.floor(Math.random() * 2) + 2; // 2 ou 3 séries
-                if (nivel === "Iniciante") reps = "15-20";
-                else if (nivel === "Intermediario") reps = "20-30";
-                else reps = "25-40";
-                break;
-            default:
-                series = 3;
-                reps = "8-12";
-        }
-        return `${series}x${reps}`;
-    }
-
-    function getDescanso(objetivo) {
-        switch (objetivo) {
-            case "Hipertrofia": return "60-90 segundos";
-            case "Emagrecimento": return "30-60 segundos";
-            case "Resistencia": return "30-45 segundos";
-            default: return "60 segundos";
-        }
-    }
-
-    // --- Firebase Authentication ---
-    // 👇️ NOVO: onAuthStateChanged usando a sintaxe de módulo
-    onAuthStateChanged(auth, (user) => {
-        if (user) {
-            currentUser = user;
-            document.getElementById('authContainer').style.display = 'none';
-            document.getElementById('appContent').style.display = 'block';
-            document.getElementById('userInfoDisplay').innerText = `Logado como: ${user.email}`;
-            document.getElementById('logoutButton').style.display = 'block';
-            loadExerciciosFromFirestore().then(() => {
-                loadUserData(); // Load user data AFTER exercises are loaded
-            }).catch(error => {
-                console.error("Erro ao carregar exercícios do Firestore:", error);
-                showModal("Erro ao carregar a lista de exercícios. Tente novamente mais tarde.");
-            });
-        } else {
-            currentUser = null;
-            document.getElementById('authContainer').style.display = 'block';
-            document.getElementById('appContent').style.display = 'none';
-            document.getElementById('userInfoDisplay').innerText = '';
-            document.getElementById('logoutButton').style.display = 'none';
-        }
-    });
-
-    async function loadExerciciosFromFirestore() {
-        try {
-            // 👇️ NOVO: Usando a sintaxe de módulo do Firestore
-            const querySnapshot = await getDocs(collection(db, "exercicios"));
-            exerciciosDB = querySnapshot.docs.map(doc => doc.data());
-            console.log(`Carregados ${exerciciosDB.length} exercícios do Firestore.`);
-        } catch (error) {
-            console.error("Erro ao carregar exercícios do Firestore:", error);
-            throw error;
-        }
-    }
-
-    async function handleAuth() {
-        const email = document.getElementById('authEmail').value;
-        const password = document.getElementById('authPassword').value;
-        const authMessage = document.getElementById('authMessage');
-
-        if (!email || !password) {
-            authMessage.innerText = "Por favor, preencha email e senha.";
-            return;
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: #0d1117;
+            color: #c9d1d9;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            min-height: 100vh;
+            background-image: linear-gradient(135deg, #0d1117 0%, #171d2b 100%);
+            font-size: 18px;
+            padding: 20px;
         }
 
-        try {
-            // 👇️ NOVO: signInWithEmailAndPassword usando a sintaxe de módulo
-            await signInWithEmailAndPassword(auth, email, password);
-            authMessage.innerText = "Login realizado com sucesso!";
-        } catch (error) {
-            // If sign in fails, try to create an account
-            if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password') {
-                try {
-                    // 👇️ NOVO: createUserWithEmailAndPassword usando a sintaxe de módulo
-                    const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-                    // NOVO CÓDIGO AQUI: Adiciona o campo 'nivelAcesso' para novos usuários
-                    // 👇️ NOVO: setDoc usando a sintaxe de módulo
-                    await setDoc(doc(db, 'users', userCredential.user.uid), {
-                        email: email,
-                        nivelAcesso: 'gratuito'
-                    }, { merge: true });
-
-                    authMessage.innerText = "Conta criada e login realizado com sucesso!";
-                } catch (createError) {
-                    authMessage.innerText = `Erro ao criar conta: ${createError.message}`;
-                }
-            } else {
-                authMessage.innerText = `Erro de autenticação: ${error.message}`;
-            }
-        }
-    }
-
-    async function logout() {
-        try {
-            // 👇️ NOVO: signOut usando a sintaxe de módulo
-            await signOut(auth);
-            showModal("Você foi desconectado.");
-        } catch (error) {
-            console.error("Erro ao fazer logout:", error);
-            showModal(`Erro ao fazer logout: ${error.message}`);
-        }
-    }
-
-    async function saveUserData() {
-        if (!currentUser) {
-            console.warn("Nenhum usuário logado para salvar dados.");
-            return;
+        .container {
+            background: #161b22;
+            padding: 40px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+            width: 100%;
+            max-width: 900px;
+            box-sizing: border-box;
+            border: 1px solid #30363d;
+            margin-top: 20px;
         }
 
-        const nomeAluno = document.getElementById('nomeAluno').value;
-        const idade = document.getElementById('idade').value;
-        const peso = document.getElementById('peso').value;
-        const altura = document.getElementById('altura').value;
-        const sexo = document.getElementById('sexo').value;
-        const nivel = document.getElementById('nivel').value;
-        const objetivo = document.getElementById('objetivo').value;
-        const observacoes = document.getElementById('observacoes').value;
-
-        const equipamentos = Array.from(document.querySelectorAll('#equipamentos input[type="checkbox"]:checked'))
-                                 .map(cb => cb.value);
-        const tecnicas = Array.from(document.querySelectorAll('#tecnicas input[type="checkbox"]:checked'))
-                              .map(cb => cb.value);
-
-        const customDaysData = [];
-        document.querySelectorAll('.custom-day-entry').forEach(dayDiv => {
-            const dayLabel = dayDiv.getAttribute('data-day-label');
-            const selectedGroups = Array.from(dayDiv.querySelectorAll('input[type="checkbox"]:checked'))
-                                        .map(cb => cb.value);
-            customDaysData.push({ dayLabel, selectedGroups });
-        });
+        h1 {
+            text-align: center;
+            color: #58a6ff;
+            margin-bottom: 25px;
+            font-weight: 700;
+            text-shadow: 0 0 10px rgba(88, 166, 255, 0.2);
+            padding-bottom: 15px;
+            border-bottom: 1px solid #30363d;
+            font-size: 2.5em;
+        }
         
-        try {
-            // 👇️ NOVO: setDoc usando a sintaxe de módulo
-            await setDoc(doc(db, 'users', currentUser.uid), {
-                nomeAluno, idade, peso, altura, sexo, nivel, objetivo,
-                equipamentos, tecnicas, observacoes, customDaysData,
-                generatedTrainingPlan
-            }, { merge: true });
-            console.log("Dados do usuário e treino salvos com sucesso!");
-        } catch (error) {
-            console.error("Erro ao salvar dados do usuário:", error);
-            showModal(`Erro ao salvar dados: ${error.message}`);
+        h2 {
+            color: #58a6ff;
+            margin-top: 30px;
+            margin-bottom: 15px;
+            font-weight: 600;
+            font-size: 1.8em;
         }
-    }
-
-    async function loadUserData() {
-        if (!currentUser) {
-            console.warn("Nenhum usuário logado para carregar dados.");
-            return;
+        
+        h3 {
+             font-size: 1.5em;
+             margin-bottom: 10px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 400;
+            color: #8b949e;
         }
 
-        try {
-            // 👇️ NOVO: getDoc usando a sintaxe de módulo
-            const userDocRef = doc(db, 'users', currentUser.uid);
-            const docSnap = await getDoc(userDocRef);
+        input[type="text"],
+        input[type="number"],
+        select,
+        .treino-container input[type="text"],
+        .treino-container textarea {
+            width: 100%;
+            padding: 15px;
+            margin-bottom: 20px;
+            border: 1px solid #30363d;
+            border-radius: 8px;
+            background: #0d1117;
+            color: #c9d1d9;
+            box-sizing: border-box;
+            transition: border-color 0.3s, box-shadow 0.3s;
+            font-size: 1em;
+        }
+        
+        input[type="text"]:focus,
+        input[type="number"]:focus,
+        select:focus,
+        .treino-container input[type="text"]:focus,
+        .treino-container textarea:focus {
+            border-color: #58a6ff;
+            box-shadow: 0 0 0 2px rgba(88, 166, 255, 0.3);
+            outline: none;
+        }
+        
+        input[type="checkbox"] {
+            margin-right: 10px;
+            transform: scale(1.2);
+        }
+        
+        .treino-dia {
+            border: 1px solid #30363d;
+            background: #1c2128;
+            padding: 25px;
+            margin-bottom: 20px;
+            border-radius: 12px;
+            position: relative;
+            transition: box-shadow 0.3s;
+        }
+        
+        .treino-dia:hover {
+            box-shadow: 0 0 15px rgba(88, 166, 255, 0.1);
+        }
+        
+        .treino-dia.draggable:hover {
+             cursor: grab;
+        }
 
-            if (docSnap.exists()) {
-                const data = docSnap.data();
-                userNivelAcesso = data.nivelAcesso || 'gratuito';
-                const exportPdfButton = document.getElementById('exportPdfButton');
-                const upgradePremiumButton = document.getElementById('upgradePremiumButton');
-                
-                if (userNivelAcesso === 'gratuito') {
-                    exportPdfButton.disabled = true;
-                    exportPdfButton.innerText = "Exportar para PDF (Premium)";
-                    if(upgradePremiumButton) upgradePremiumButton.style.display = 'block';
-                } else {
-                    exportPdfButton.disabled = false;
-                    exportPdfButton.innerText = "Exportar para PDF";
-                    if(upgradePremiumButton) upgradePremiumButton.style.display = 'none';
-                }
+        .treino-dia h3 {
+            margin-top: 0;
+            color: #58a6ff;
+            font-size: 1.5em;
+            border-bottom: 1px solid #30363d;
+            padding-bottom: 10px;
+        }
+        
+        .treino-dia .remover {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            color: #f87171;
+            font-weight: bold;
+            cursor: pointer;
+            font-size: 1.1em;
+            transition: color 0.3s;
+        }
+        
+        .treino-dia .remover:hover {
+            color: #dc2626;
+        }
 
-                document.getElementById('nomeAluno').value = data.nomeAluno || '';
-                document.getElementById('idade').value = data.idade || '';
-                document.getElementById('peso').value = data.peso || '';
-                document.getElementById('altura').value = data.altura || '';
-                document.getElementById('sexo').value = data.sexo || '';
-                document.getElementById('nivel').value = data.nivel || '';
-                document.getElementById('objetivo').value = data.objetivo || '';
-                document.getElementById('observacoes').value = data.observacoes || '';
+        .checkbox-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin-top: 10px;
+        }
+        
+        .tecnicas-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin-top: 10px;
+            margin-bottom: 20px;
+        }
 
-                const equipamentoCheckboxes = document.querySelectorAll('#equipamentos input[type="checkbox"]');
-                equipamentoCheckboxes.forEach(cb => cb.checked = false);
-                if (data.equipamentos) {
-                    data.equipamentos.forEach(eq => {
-                        const cb = document.querySelector(`#equipamentos input[value="${eq}"]`);
-                        if (cb) cb.checked = true;
-                    });
-                }
+        .checkbox-item {
+            display: flex;
+            align-items: center;
+            flex-basis: calc(33.333% - 15px);
+            min-width: 150px;
+        }
+        
+        .tecnicas-group .checkbox-item {
+             flex-basis: calc(50% - 15px);
+        }
 
-                const tecnicaCheckboxes = document.querySelectorAll('#tecnicas input[type="checkbox"]');
-                tecnicaCheckboxes.forEach(cb => cb.checked = false);
-                if (data.tecnicas) {
-                    data.tecnicas.forEach(tech => {
-                        const cb = document.querySelector(`#tecnicas input[value="${tech}"]`);
-                        if (cb) cb.checked = true;
-                    });
-                }
+        .checkbox-item label {
+            font-weight: 300;
+            font-size: 1em;
+            color: #c9d1d9;
+            margin-bottom: 0;
+        }
+        
+        .form-section {
+            background: #1c2128;
+            padding: 25px;
+            border-radius: 12px;
+            margin-bottom: 25px;
+            border: 1px solid #30363d;
+        }
 
-                document.getElementById('customDaysContainer').innerHTML = '';
-                dayCounter = 0;
-                if (data.customDaysData && data.customDaysData.length > 0) {
-                    data.customDaysData.forEach(day => {
-                        addCustomDay(day.dayLabel, day.selectedGroups);
-                    });
-                } else {
-                    addCustomDay();
-                }
+        .form-section h2 {
+            border-bottom: 1px solid #30363d;
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+            color: #58a6ff;
+        }
 
-                if (data.generatedTrainingPlan && data.generatedTrainingPlan.length > 0) {
-                    generatedTrainingPlan = data.generatedTrainingPlan;
-                    displayGeneratedTrainingPlan();
-                } else {
-                    document.getElementById('resultado').innerHTML = "<p class='text-gray-400'>Nenhum treino gerado ainda. Preencha os dados e clique em 'Gerar Treino'.</p>";
-                }
+        .add-dia, .btn-primary, .btn-secondary, .modal-footer button {
+            width: 100%;
+            padding: 18px;
+            font-size: 1.1em;
+            font-weight: 600;
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background-color 0.3s, transform 0.2s, box-shadow 0.3s;
+            margin-top: 15px;
+        }
+        
+        .add-dia {
+            background-color: #58a6ff;
+            box-shadow: 0 5px 15px rgba(88, 166, 255, 0.3);
+        }
 
-            } else {
-                addCustomDay();
+        .add-dia:hover {
+            background-color: #3b82f6;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(88, 166, 255, 0.4);
+        }
+
+        .btn-primary, .modal-footer button {
+            background-color: #38c172;
+            box-shadow: 0 5px 15px rgba(56, 193, 114, 0.3);
+        }
+        
+        .btn-primary:hover, .modal-footer button:hover {
+            background-color: #2b9e59;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(56, 193, 114, 0.4);
+        }
+        
+        .btn-secondary {
+            background-color: #555;
+            box-shadow: none;
+            margin-bottom: 20px;
+        }
+        
+        .btn-secondary:hover {
+            background-color: #444;
+            transform: translateY(-2px);
+        }
+
+        #treinoPreview {
+            display: none;
+            margin-top: 30px;
+        }
+        
+        #treinoPreview .form-section {
+            background: #1c2128;
+            padding: 25px;
+            border-radius: 12px;
+            margin-bottom: 25px;
+            border: 1px solid #30363d;
+        }
+
+        /* --- Estilos da Pré-Visualização (Melhorados) --- */
+        .treino-container {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            margin-top: 20px;
+            padding-bottom: 20px;
+        }
+        
+        .treino-item {
+            background: #161b22;
+            padding: 20px;
+            border-radius: 10px;
+            border: 1px solid #30363d;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .treino-item:hover {
+            box-shadow: 0 6px 15px rgba(0, 0, 0, 0.3);
+            transform: translateY(-2px);
+        }
+        /* Classe para destacar o item que está sendo arrastado */
+        .treino-item.dragging {
+            opacity: 0.5;
+            transform: scale(1.02);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
+        }
+        /* Classe para destacar o local de soltar o item */
+        .treino-item.drag-over {
+            border: 2px dashed #58a6ff;
+            box-shadow: 0 0 10px rgba(88, 166, 255, 0.5);
+        }
+
+        .treino-item .remover {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            color: #f87171;
+            font-weight: bold;
+            cursor: pointer;
+            font-size: 1.1em;
+            transition: color 0.3s;
+            border: none;
+            background: transparent;
+            padding: 5px;
+        }
+        
+        .treino-item .remover:hover {
+            color: #dc2626;
+        }
+        
+        .treino-item-header {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #30363d;
+        }
+        
+        .treino-item-header h4 {
+            margin: 0;
+            flex-grow: 1;
+            color: #58a6ff;
+            font-size: 1.3em;
+            font-weight: 600;
+        }
+
+        .treino-item-header input[type="text"] {
+            font-size: 1.3em;
+            font-weight: 600;
+            color: #c9d1d9;
+            background: transparent;
+            border: none;
+            padding: 0;
+            margin: 0;
+        }
+        
+        .treino-item-body {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            align-items: flex-end;
+        }
+        
+        .treino-item-body .input-group {
+            display: flex;
+            flex-direction: column;
+            flex-basis: 150px;
+            flex-grow: 1;
+        }
+
+        .treino-item-body label {
+            font-size: 0.9em;
+            color: #8b949e;
+            margin-bottom: 5px;
+        }
+
+        .treino-item-body input {
+            padding: 10px;
+            margin: 0;
+            font-size: 1em;
+            background: #0d1117;
+        }
+        
+        .treino-item textarea {
+            width: 100%;
+            min-height: 80px;
+            resize: vertical;
+            padding: 10px;
+            border: 1px solid #30363d;
+            border-radius: 8px;
+            background: #0d1117;
+            color: #c9d1d9;
+            font-size: 1em;
+        }
+
+        .treino-item .grip-handle {
+            cursor: grab;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            padding: 5px;
+            opacity: 0.5;
+            transition: opacity 0.2s;
+        }
+
+        .treino-item .grip-handle:hover {
+            opacity: 1;
+        }
+
+        .treino-item .grip-handle::before, .treino-item .grip-handle::after, .treino-item .grip-handle span {
+            content: '';
+            display: block;
+            width: 20px;
+            height: 2px;
+            background: #8b949e;
+            border-radius: 1px;
+        }
+        
+        .adicionar-exercicio-btn {
+            background-color: #58a6ff;
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            font-size: 1em;
+            border-radius: 8px;
+            cursor: pointer;
+            width: auto;
+            margin-top: 10px;
+            align-self: flex-start;
+            transition: background-color 0.3s, transform 0.2s;
+        }
+        
+        .adicionar-exercicio-btn:hover {
+            background-color: #3b82f6;
+            transform: translateY(-1px);
+        }
+        
+        .tecnica-info {
+            font-size: 0.9em;
+            font-style: italic;
+            color: #8b949e;
+            padding: 10px;
+            border-left: 3px solid #58a6ff;
+            margin-top: 10px;
+            background: #11151a;
+            border-radius: 4px;
+        }
+        
+        /* Modal de sugestão de exercícios */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-content {
+            background-color: #161b22;
+            padding: 30px;
+            border-radius: 10px;
+            max-width: 600px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+            position: relative;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.5);
+            border: 1px solid #30363d;
+        }
+
+        .close-button {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            color: #8b949e;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        
+        .modal h3 {
+             color: #c9d1d9;
+             border-bottom: 1px solid #30363d;
+             padding-bottom: 10px;
+             margin-top: 0;
+        }
+
+        .exercicios-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .exercicio-sugestao {
+            background: #1c2128;
+            color: #c9d1d9;
+            padding: 15px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background-color 0.2s, transform 0.2s;
+            text-align: center;
+            font-weight: 500;
+            border: 1px solid #30363d;
+        }
+
+        .exercicio-sugestao:hover {
+            background-color: #3b82f6;
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+        }
+        
+        .exercicio-sugestao.selected {
+            background-color: #38c172;
+            color: #fff;
+            border-color: #38c172;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 10px rgba(56, 193, 114, 0.4);
+        }
+
+        .modal-footer {
+            margin-top: 20px;
+            display: flex;
+            justify-content: flex-end;
+        }
+
+        /* Botões de acessibilidade para subir/descer */
+        .move-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+            margin-left: auto;
+        }
+
+        .move-buttons button {
+            background: none;
+            border: 1px solid #30363d;
+            color: #8b949e;
+            padding: 5px 8px;
+            cursor: pointer;
+            font-size: 1em;
+            border-radius: 5px;
+            transition: background-color 0.2s, color 0.2s;
+        }
+
+        .move-buttons button:hover {
+            background-color: #30363d;
+            color: #c9d1d9;
+        }
+
+        .move-buttons button:disabled {
+            opacity: 0.3;
+            cursor: not-allowed;
+        }
+
+        /* Media Queries para responsividade */
+        @media (max-width: 768px) {
+            .container {
+                padding: 20px;
             }
-        } catch (error) {
-            console.error("Erro ao carregar dados do usuário:", error);
-            showModal(`Erro ao carregar dados: ${error.message}`);
-            addCustomDay();
+            h1 {
+                font-size: 2em;
+            }
+            .checkbox-item {
+                flex-basis: calc(50% - 15px);
+            }
         }
-    }
-
-    async function upgradeToPremium() {
-        if (!currentUser) {
-            showModal("Você precisa estar logado para atualizar seu plano.");
-            return;
+        
+        @media (max-width: 480px) {
+            h1 {
+                font-size: 1.8em;
+            }
+            .checkbox-item {
+                flex-basis: 100%;
+            }
+            .add-dia, .btn-primary, .btn-secondary, .modal-footer button {
+                 font-size: 1em;
+            }
+            .treino-item-body {
+                flex-direction: column;
+                gap: 10px;
+            }
+            .treino-item-body .input-group {
+                flex-basis: auto;
+            }
         }
+    </style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.23/jspdf.plugin.autotable.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <h1>Your Trainer Partner</h1>
+        <form id="treinoForm">
+            <div id="formularioInicial">
+                <div class="form-section">
+                    <h2>Informações do Aluno</h2>
+                    <label for="nome_aluno">Nome do Aluno:</label>
+                    <input type="text" id="nome_aluno" required>
 
-        try {
-            // 👇️ NOVO: updateDoc usando a sintaxe de módulo
-            const userDocRef = doc(db, 'users', currentUser.uid);
-            await updateDoc(userDocRef, {
-                nivelAcesso: 'premium'
-            });
-            showModal("Parabéns! Seu plano foi atualizado para Premium (Simulação). Agora você pode exportar seus treinos para PDF!");
-            userNivelAcesso = 'premium';
-            document.getElementById('exportPdfButton').disabled = false;
-            document.getElementById('exportPdfButton').innerText = "Exportar para PDF";
-            document.getElementById('upgradePremiumButton').style.display = 'none';
-        } catch (error) {
-            console.error("Erro ao simular o upgrade para Premium:", error);
-            showModal(`Ocorreu um erro ao atualizar seu plano: ${error.message}`);
-        }
-    }
+                    <label for="dificuldade">Nível de Dificuldade:</label>
+                    <select id="dificuldade" required>
+                        <!-- Nova opção adicionada aqui -->
+                        <option value="Em Casa">Treino em Casa</option>
+                        <option value="Iniciante">Iniciante</option>
+                        <option value="Intermediario">Intermediario</option>
+                        <option value="Avancado">Avançado</option>
+                    </select>
 
-
-    function displayGeneratedTrainingPlan() {
-        let treinoOutputHTML = '';
-        treinoGeradoConteudoParaPDF = {
-            aluno: document.getElementById('nomeAluno').value,
-            idade: document.getElementById('idade').value,
-            peso: document.getElementById('peso').value,
-            altura: document.getElementById('altura').value,
-            sexo: document.getElementById('sexo').value,
-            nivel: document.getElementById('nivel').value,
-            objetivo: document.getElementById('objetivo').value,
-            tecnicas: Array.from(document.querySelectorAll('#tecnicas input[type="checkbox"]:checked')).map(cb => cb.value),
-            observacoes: document.getElementById('observacoes').value,
-            dias: []
-        };
-
-        if (generatedTrainingPlan.length === 0) {
-            document.getElementById('resultado').innerHTML = "<p class='text-gray-400'>Nenhum treino gerado ainda. Preencha os dados e clique em 'Gerar Treino'.</p>";
-            return;
-        }
-
-        generatedTrainingPlan.forEach(day => {
-            treinoOutputHTML += `<h3 class="text-xl font-bold mb-3 mt-6 text-orange-400">Dia ${day.dayLabel}: Treino de ${day.muscleGroups.join(' + ')}</h3>\n`;
-            
-            const selectedWarmup = getWarmup(day.muscleGroups);
-            treinoOutputHTML += `<p class="font-semibold mt-4">Aquecimento Geral (5-10 min):</p>\n<ul class="list-disc list-inside ml-4 mb-4">`;
-            selectedWarmup.forEach(item => {
-                treinoOutputHTML += `<li>${item}</li>`;
-            });
-            treinoOutputHTML += `</ul>`;
-
-            const exercisesForPdfTable = [];
-
-            if (day.exercises.length === 0) {
-                treinoOutputHTML += `<p class="text-red-300">Não foi possível gerar exercícios para o Dia ${day.dayLabel}. Por favor, verifique a sua seleção de grupos musculares, opções de equipamentos e nível de treino para garantir que há exercícios disponíveis.</p>\n`;
-                exercisesForPdfTable.push({
-                    nome: `Não foi possível gerar exercícios para este dia.`,
-                    equipamento: "",
-                    execucao: "Verifique a configuração.",
-                    descanso: "",
-                    tecnica: ""
-                });
-            } else {
-                let currentDayHtmlExercises = [];
-                day.exercises.forEach((exercicio, index) => {
-                    const execucaoText = `${exercicio.series}x${exercicio.reps}`;
-                    const descansoText = `${exercicio.descanso} segundos`;
-                    const tecnicaText = exercicio.tecnica ? ` | Técnica: ${exercicio.tecnica}` : '';
+                    <label for="objetivo">Objetivo do Treino:</label>
+                    <select id="objetivo" required>
+                        <option value="Emagrecimento">Emagrecimento</option>
+                        <option value="Hipertrofia">Hipertrofia</option>
+                        <option value="Condicionamento Físico Geral">Condicionamento Físico Geral</option>
+                    </select>
                     
-                    currentDayHtmlExercises.push(`
-                        <li class="flex flex-col sm:flex-row items-start sm:items-center justify-between bg-gray-600 p-3 rounded-md mb-2">
-                            <div>
-                                <strong class="text-yellow-300">${exercicio.nome}</strong> <span class="text-sm text-gray-300">(${exercicio.equipamento})</span> - ${execucaoText} ${tecnicaText}
-                            </div>
-                            <div class="flex gap-2 mt-2 sm:mt-0">
-                                <button onclick="openEditExerciseModal('${day.dayLabel}', ${index})" class="bg-blue-600 hover:bg-blue-700 text-white text-xs py-1 px-2 rounded">Editar</button>
-                                <button class="remove bg-red-600 hover:bg-red-700 text-white text-xs py-1 px-2 rounded" onclick="removeExerciseFromGeneratedPlan('${day.dayLabel}', ${index})">Remover</button>
-                            </div>
-                        </li>
-                    `);
+                    <input type="checkbox" id="incluir_descricao">
+                    <label for="incluir_descricao" style="display:inline; font-weight:300;">Incluir descrições detalhadas dos exercícios</label>
+                </div>
 
-                    exercisesForPdfTable.push({
-                        nome: exercicio.nome,
-                        equipamento: exercicio.equipamento,
-                        execucao: execucaoText,
-                        descanso: descansoText,
-                        tecnica: exercicio.tecnica || '-'
-                    });
-                });
-                treinoOutputHTML += `<p class="font-semibold mt-4">💪 Treino de Força:</p><ul class="mb-4">${currentDayHtmlExercises.join('\n')}</ul>`;
-            }
-            
-            treinoOutputHTML += `<button onclick="openAddExerciseToDayModal('${day.dayLabel}')" class="py-2 px-4 rounded-lg text-white font-bold text-base bg-blue-600 hover:bg-blue-700 mt-2">Adicionar Exercício Manualmente</button>`;
+                <div class="form-section">
+                    <h2>Análise Nutricional</h2>
+                    <label for="peso">Peso (kg):</label>
+                    <input type="number" id="peso" step="0.1" required>
 
+                    <label for="altura">Altura (cm):</label>
+                    <input type="number" id="altura" required>
 
-            const currentDayPdfData = {
-                dayName: day.dayLabel,
-                groups: day.muscleGroups,
-                warmup: selectedWarmup,
-                exercises: exercisesForPdfTable,
-                cardio: day.cardio,
-            };
-            treinoGeradoConteudoParaPDF.dias.push(currentDayPdfData);
-
-
-            if (day.cardio) {
-                treinoOutputHTML += `<p class="font-semibold mt-4">🏃 Cardio: <span class="font-normal">${day.cardio}</span></p>\n`;
-            } else {
-                 treinoOutputHTML += `<p class="text-gray-400 font-semibold mt-4">🏃 Cardio: <span class="font-normal">Nenhum exercício de cardio gerado para este dia.</span></p>\n`;
-            }
-
-            treinoOutputHTML += `\n<hr class="my-6 border-gray-500">\n`;
-        });
-        document.getElementById('resultado').innerHTML = treinoOutputHTML;
-    }
-
-    // --- Modal Functions ---
-    function showModal(message, modalId = 'genericModal') {
-        document.getElementById('modalMessage').innerText = message;
-        document.getElementById(modalId).style.display = 'flex';
-    }
-
-    function closeModal(modalId = 'genericModal') {
-        document.getElementById(modalId).style.display = 'none';
-    }
-
-    let currentEditDayLabel = '';
-    let currentEditExerciseIndex = -1;
-
-    function openEditExerciseModal(dayLabel, exerciseIndex) {
-        currentEditDayLabel = dayLabel;
-        currentEditExerciseIndex = exerciseIndex;
-
-        const day = generatedTrainingPlan.find(d => d.dayLabel === dayLabel);
-        if (day) {
-            const exercise = day.exercises[exerciseIndex];
-            if (exercise) {
-                document.getElementById('editExName').value = exercise.nome;
-                document.getElementById('editExSetsReps').value = `${exercise.series}x${exercise.reps}`;
-                document.getElementById('editExRest').value = exercise.descanso;
-                document.getElementById('editExTechnique').value = exercise.tecnica || '';
-                showModal('', 'editExerciseModal');
-            } else {
-                showModal("Erro: Exercício não encontrado para edição.", 'genericModal');
-            }
-        } else {
-            showModal("Erro: Dia de treino não encontrado para edição.", 'genericModal');
-        }
-    }
-
-    function saveEditedExercise() {
-        if (currentEditDayLabel && currentEditExerciseIndex !== -1) {
-            const day = generatedTrainingPlan.find(d => d.dayLabel === currentEditDayLabel);
-            if (day) {
-                const exercise = day.exercises[currentEditExerciseIndex];
-                if (exercise) {
-                    const newName = document.getElementById('editExName').value;
-                    const setsReps = document.getElementById('editExSetsReps').value.split('x');
-                    const newRest = parseInt(document.getElementById('editExRest').value);
-                    const newTechnique = document.getElementById('editExTechnique').value;
-
-                    if (!newName || setsReps.length !== 2 || isNaN(parseInt(setsReps[0])) || isNaN(newRest)) {
-                        showModal("Por favor, preencha todos os campos corretamente (Séries/Repetições como 'NxM', Descanso como número).");
-                        return;
-                    }
-
-                    exercise.nome = newName;
-                    exercise.series = parseInt(setsReps[0]);
-                    exercise.reps = setsReps[1].trim();
-                    exercise.descanso = newRest;
-                    exercise.tecnica = newTechnique;
+                    <label for="idade">Idade:</label>
+                    <input type="number" id="idade" required>
                     
-                    displayGeneratedTrainingPlan();
-                    saveUserData();
-                    showModal("Exercício atualizado com sucesso!", 'genericModal');
-                    closeModal('editExerciseModal');
-                }
-            }
-        }
-    }
+                    <label for="sexo">Sexo:</label>
+                    <select id="sexo" required>
+                        <option value="Masculino">Masculino</option>
+                        <option value="Feminino">Feminino</option>
+                    </select>
 
-    function removeExerciseFromGeneratedPlan(dayLabel, exerciseIndex) {
-        const day = generatedTrainingPlan.find(d => d.dayLabel === dayLabel);
-        if (day) {
-            const removedExercise = day.exercises.splice(exerciseIndex, 1)[0];
-
-            if (removedExercise.tecnica === 'Bi-set' || removedExercise.tecnica === 'Superset') {
-                let pairedIndex = -1;
-                if (removedExercise.nome.includes('(Conjugado com')) {
-                    const originalName = removedExercise.nome.match(/\(Conjugado com (.*?)\)/);
-                    if (originalName && originalName[1]) {
-                        pairedIndex = day.exercises.findIndex(ex => ex.nome === originalName[1] && (ex.tecnica === 'Bi-set' || ex.tecnica === 'Superset'));
-                    }
-                } else if (removedExercise.pairedExercise) {
-                    const pairedName = removedExercise.pairedExercise.nome;
-                    pairedIndex = day.exercises.findIndex(ex => ex.nome.includes(`(Conjugado com ${removedExercise.nome})`));
-                }
+                    <label for="fator_atividade">Nível de Atividade Física:</label>
+                    <select id="fator_atividade" required>
+                        <option value="1.2">Sedentário (pouco ou nenhum exercício)</option>
+                        <option value="1.375">Levemente Ativo (exercício leve 1-3 dias/semana)</option>
+                        <option value="1.55">Moderadamente Ativo (exercício moderado 3-5 dias/semana)</option>
+                        <option value="1.725">Muito Ativo (exercício intenso 6-7 dias/semana)</option>
+                        <option value="1.9">Extremamente Ativo (exercício muito intenso, 2x ao dia)</option>
+                    </select>
+                </div>
                 
-                if (pairedIndex !== -1) {
-                    day.exercises.splice(pairedIndex, 1);
-                    showModal("Exercício e seu par removidos com sucesso!", 'genericModal');
-                } else {
-                    showModal("Exercício removido com sucesso!", 'genericModal');
-                }
-            } else {
-                showModal("Exercício removido com sucesso!", 'genericModal');
-            }
-            
-            displayGeneratedTrainingPlan();
-            saveUserData();
-        }
-    }
+                <div id="diasDeTreino">
+                    <h2>Planilha de Treino</h2>
+                </div>
+                
+                <button type="button" class="add-dia" onclick="adicionarDiaTreino()">+ Adicionar Dia de Treino</button>
+                <button type="button" class="btn-primary" onclick="gerarTreino()">Gerar Treino</button>
+            </div>
+        </form>
+        
+        <div id="treinoPreview">
+            <div class="form-section">
+                <h2>Pré-visualização do Treino</h2>
+                <div id="treinosPreviewContainer"></div>
+                <button type="button" class="btn-secondary" onclick="voltarParaFormulario()">← Voltar e Editar Formulário</button>
+                <button type="button" class="btn-primary" onclick="gerarPDFFinal()">Gerar PDF Final</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="exercicioModal" class="modal">
+        <div class="modal-content">
+            <span class="close-button" onclick="fecharModal()">&times;</span>
+            <h3>Sugestões de Exercícios</h3>
+            <div id="exerciciosList" class="exercicios-list">
+                </div>
+            <div class="modal-footer">
+                <button onclick="adicionarExerciciosSelecionados()">Adicionar Selecionados</button>
+            </div>
+        </div>
+    </div>
     
-    let currentAddExerciseDayLabel = '';
-    function openAddExerciseToDayModal(dayLabel) {
-        currentAddExerciseDayLabel = dayLabel;
-        populateAddExSelect();
-        showModal('', 'addExerciseToDayModal');
-    }
+    <script>
+const EXERCICIOS = [
+    // PEITO
+    { "nome": "Flexão de braço no solo", "grupoMuscular": "Peito", "grupoExercicio": "Flexão de Braço", "subGrupo": "Médio", "estilo": "Press", "tipo": "composto", "dificuldade": ["Iniciante", "Intermediario", "Avancado", "Em Casa"], "sugerirRepeticoes": { "Em Casa": "3x10-15", "Iniciante": "3x10-15", "Intermediario": "4x15-20", "Avancado": "5x20-30" }, "descricao": "De barriga para baixo, mãos na largura dos ombros, empurre o corpo até estender os braços e abaixe." },
+    { "nome": "Flexão com joelhos no chão", "grupoMuscular": "Peito", "grupoExercicio": "Flexão de Braço", "subGrupo": "Médio", "estilo": "Press", "tipo": "composto", "dificuldade": ["Iniciante", "Em Casa"], "sugerirRepeticoes": { "Em Casa": "3x8-12", "Iniciante": "3x8-12", "Intermediario": "Não recomendado", "Avancado": "Não recomendado" }, "descricao": "Variação da flexão com os joelhos apoiados no chão para reduzir a carga, ideal para iniciantes." },
+    { "nome": "Flexão declinada", "grupoMuscular": "Peito", "grupoExercicio": "Flexão de Braço", "subGrupo": "Superior", "estilo": "Press", "tipo": "composto", "dificuldade": ["Intermediario", "Avancado", "Em Casa"], "sugerirRepeticoes": { "Em Casa": "3x10-15", "Iniciante": "Não recomendado", "Intermediario": "4x15-20", "Avancado": "5x20-30" }, "descricao": "Flexão com os pés elevados em uma superfície (como uma cadeira ou banco), aumentando a carga sobre o peitoral superior." },
+    { "nome": "Flexão com pegada fechada", "grupoMuscular": "Peito", "grupoExercicio": "Flexão de Braço", "subGrupo": "Médio", "estilo": "Press", "tipo": "composto", "dificuldade": ["Intermediario", "Avancado", "Em Casa"], "sugerirRepeticoes": { "Em Casa": "3x10-15", "Iniciante": "Não recomendado", "Intermediario": "4x15-20", "Avancado": "5x20-30" }, "descricao": "Flexão com as mãos próximas, enfatizando tríceps e peitoral interno." },
+    { "nome": "Supino reto com barra", "grupoMuscular": "Peito", "grupoExercicio": "Supino Reto", "subGrupo": "Médio", "estilo": "Press", "tipo": "composto", "dificuldade": ["Intermediario", "Avancado"], "sugerirRepeticoes": { "Iniciante": "Não recomendado", "Intermediario": "4x8-10", "Avancado": "5x6-8" }, "descricao": "Deitado em banco reto, segure a barra com pegada um pouco mais aberta que os ombros. Abaixe a barra até o peito e empurre até estender os braços." },
+    { "nome": "Supino reto com halteres", "grupoMuscular": "Peito", "grupoExercicio": "Supino Reto", "subGrupo": "Médio", "estilo": "Press", "tipo": "composto", "dificuldade": ["Intermediario", "Avancado"], "sugerirRepeticoes": { "Iniciante": "Não recomendado", "Intermediario": "4x8-10", "Avancado": "5x8" }, "descricao": "Deitado em banco reto, segure um halter em cada mão com palmas para frente. Empurre para cima até estender os braços e abaixe controladamente." },
+    { "nome": "Supino inclinado com barra", "grupoMuscular": "Peito", "grupoExercicio": "Supino Inclinado", "subGrupo": "Superior", "estilo": "Press", "tipo": "composto", "dificuldade": ["Intermediario", "Avancado"], "sugerirRepeticoes": { "Iniciante": "Não recomendado", "Intermediario": "4x8-10", "Avancado": "5x6-8" }, "descricao": "Deitado em banco inclinado (30-45°), segure a barra com pegada um pouco mais aberta que os ombros. Abaixe até a parte superior do peito e empurre." },
+    { "nome": "Supino inclinado com halteres", "grupoMuscular": "Peito", "grupoExercicio": "Supino Inclinado", "subGrupo": "Superior", "estilo": "Press", "tipo": "composto", "dificuldade": ["Intermediario", "Avancado"], "sugerirRepeticoes": { "Iniciante": "Não recomendado", "Intermediario": "4x8-10", "Avancado": "5x8" }, "descricao": "Deitado em banco inclinado, segure halteres com palmas para frente. Empurre para cima e abaixe controladamente." },
+    { "nome": "Supino declinado com barra", "grupoMuscular": "Peito", "grupoExercicio": "Supino Declinado", "subGrupo": "Inferior", "estilo": "Press", "tipo": "composto", "dificuldade": ["Intermediario", "Avancado"], "sugerirRepeticoes": { "Iniciante": "Não recomendado", "Intermediario": "4x8-10", "Avancado": "5x6-8" }, "descricao": "Deitado em banco declinado, segure a barra com pegada ligeiramente aberta. Abaixe até a parte inferior do peito e empurre." },
+    { "nome": "Supino declinado com halteres", "grupoMuscular": "Peito", "grupoExercicio": "Supino Declinado", "subGrupo": "Inferior", "estilo": "Press", "tipo": "composto", "dificuldade": ["Intermediario", "Avancado"], "sugerirRepeticoes": { "Iniciante": "Não recomendado", "Intermediario": "4x8-10", "Avancado": "5x8" }, "descricao": "Deitado em banco declinado, segure halteres com palmas para frente. Abaixe até o peito e empurre." },
+    { "nome": "Supino reto na máquina", "grupoMuscular": "Peito", "grupoExercicio": "Supino Reto", "subGrupo": "Médio", "estilo": "Press", "tipo": "composto", "dificuldade": ["Iniciante", "Intermediario", "Avancado"], "sugerirRepeticoes": { "Iniciante": "3x10-12", "Intermediario": "4x8-10", "Avancado": "5x8" }, "descricao": "Sentado na máquina, posicione as mãos nas alças à altura do peito. Empurre até estender os braços e retorne." },
+    { "nome": "Supino inclinado na máquina", "grupoMuscular": "Peito", "grupoExercicio": "Supino Inclinado", "subGrupo": "Superior", "estilo": "Press", "tipo": "composto", "dificuldade": ["Iniciante", "Intermediario", "Avancado"], "sugerirRepeticoes": { "Iniciante": "3x10-12", "Intermediario": "4x8-10", "Avancado": "5x8" }, "descricao": "Sentado na máquina inclinada, segure as alças na altura do peito superior. Empurre e retorne controladamente." },
+    { "nome": "Crucifixo reto com halteres", "grupoMuscular": "Peito", "grupoExercicio": "Crucifixo Reto", "subGrupo": "Médio", "estilo": "Isolador", "tipo": "isolador", "dificuldade": ["Iniciante", "Intermediario", "Avancado"], "sugerirRepeticoes": { "Iniciante": "3x12-15", "Intermediario": "4x10-12", "Avancado": "4x8-10" }, "descricao": "Deitado em banco reto, braços semiflexionados, abra os halteres lateralmente até alongar o peitoral e feche." },
+    { "nome": "Crucifixo inclinado com halteres", "grupoMuscular": "Peito", "grupoExercicio": "Crucifixo Inclinado", "subGrupo": "Superior", "estilo": "Isolador", "tipo": "isolador", "dificuldade": ["Iniciante", "Intermediario", "Avancado"], "sugerirRepeticoes": { "Iniciante": "3x12-15", "Intermediario": "4x10-12", "Avancado": "4x8-10" }, "descricao": "Deitado em banco inclinado, braços semiflexionados, abra lateralmente até alongar o peitoral superior e feche." },
+    { "nome": "Crucifixo na polia baixa em pé", "grupoMuscular": "Peito", "grupoExercicio": "Crucifixo", "subGrupo": "Superior", "estilo": "Isolador", "tipo": "isolador", "dificuldade": ["Intermediario", "Avancado"], "sugerirRepeticoes": { "Iniciante": "Não recomendado", "Intermediario": "4x12-15", "Avancado": "4x10-12" }, "descricao": "Em pé, segure as polias baixas, cruze os braços à frente do corpo e retorne controlado." },
+    { "nome": "Crucifixo na polia alta em pé (crossover)", "grupoMuscular": "Peito", "grupoExercicio": "Crucifixo", "subGrupo": "Inferior", "estilo": "Isolador", "tipo": "isolador", "dificuldade": ["Intermediario", "Avancado"], "sugerirRepeticoes": { "Iniciante": "Não recomendado", "Intermediario": "4x12-15", "Avancado": "4x10-12" }, "descricao": "Em pé, segure as polias altas, puxe para frente e cruze os braços à altura do peito, retorne." },
+    { "nome": "Peck deck (voador)", "grupoMuscular": "Peito", "grupoExercicio": "Peck Deck", "subGrupo": "Médio", "estilo": "Isolador", "tipo": "isolador", "dificuldade": ["Iniciante", "Intermediario", "Avancado"], "sugerirRepeticoes": { "Iniciante": "3x12-15", "Intermediario": "4x10-12", "Avancado": "4x8-10" }, "descricao": "Sentado na máquina, posicione os braços nas almofadas laterais, feche os braços à frente e retorne." },
+    { "nome": "Pullover com halteres", "grupoMuscular": "Peito", "grupoExercicio": "Pullover", "subGrupo": "Médio", "estilo": "Isolador", "tipo": "isolador", "dificuldade": ["Intermediario", "Avancado"], "sugerirRepeticoes": { "Iniciante": "Não recomendado", "Intermediario": "4x10-12", "Avancado": "4x8-10" }, "descricao": "Deitado em banco, segure halter com ambas as mãos acima do peito. Abaixe atrás da cabeça e retorne." },
+    { "nome": "Pullover com barra", "grupoMuscular": "Peito", "grupoExercicio": "Pullover", "subGrupo": "Médio", "estilo": "Isolador", "tipo": "isolador", "dificuldade": ["Intermediario", "Avancado"], "sugerirRepeticoes": { "Iniciante": "Não recomendado", "Intermediario": "4x10-12", "Avancado": "4x8-10" }, "descricao": "Deitado em banco, segure barra com ambas as mãos. Abaixe atrás da cabeça e retorne." },
 
-    function populateAddExSelect() {
-        const addExMuscleGroupSelect = document.getElementById('addExMuscleGroup');
-        addExMuscleGroupSelect.innerHTML = '<option value="">Selecione um Grupo</option>';
-        const uniqueGroups = [...new Set(exerciciosDB.map(ex => ex.grupoPrimario))].sort();
-        uniqueGroups.forEach(group => {
-            const option = document.createElement('option');
-            option.value = group;
-            option.innerText = group;
-            addExMuscleGroupSelect.appendChild(option);
-        });
-        updateAddExerciseGroupOptions();
-    }
+    // COSTAS
+    { "nome": "Remada curvada com elástico", "grupoMuscular": "Costas", "grupoExercicio": "Remada Curvada", "estilo": "Puxada Horizontal", "tipo": "composto", "dificuldade": ["Iniciante", "Em Casa"], "sugerirRepeticoes": { "Em Casa": "3x12-15", "Iniciante": "3x12-15", "Intermediario": "Não recomendado", "Avancado": "Não recomendado" }, "descricao": "Sentado com as pernas estendidas, prenda um elástico nos pés e puxe em direção ao tronco." },
+    { "nome": "Remada invertida com mochila", "grupoMuscular": "Costas", "grupoExercicio": "Remada Invertida", "estilo": "Puxada Horizontal", "tipo": "composto", "dificuldade": ["Iniciante", "Intermediario", "Em Casa"], "sugerirRepeticoes": { "Em Casa": "3x10-12", "Iniciante": "3x10-12", "Intermediario": "4x10-12", "Avancado": "5x8-10" }, "descricao": "Segure a alça da mochila com as mãos, puxe em direção ao peito, contraindo as costas. A carga pode ser ajustada com livros ou outros objetos." },
+    { "nome": "Remada invertida (com toalha)", "grupoMuscular": "Costas", "grupoExercicio": "Remada Invertida", "estilo": "Puxada Horizontal", "tipo": "composto", "dificuldade": ["Intermediario", "Avancado", "Em Casa"], "sugerirRepeticoes": { "Em Casa": "3x10-12", "Iniciante": "Não recomendado", "Intermediario": "4x10-12", "Avancado": "5x8-10" }, "descricao": "Use uma toalha ou cinto preso em uma porta fechada, deite-se no chão e puxe o corpo para cima." },
+    { "nome": "Superman", "grupoMuscular": "Costas", "grupoExercicio": "Superman", "estilo": "Extensão", "tipo": "isolador", "dificuldade": ["Iniciante", "Intermediario", "Avancado", "Em Casa"], "sugerirRepeticoes": { "Em Casa": "3x15-20", "Iniciante": "3x15-20", "Intermediario": "4x20-25", "Avancado": "5x25-30" }, "descricao": "Deitado de bruços, eleve os braços e as pernas ao mesmo tempo, contraindo a lombar." },
+    { "nome": "Remada curvada com barra", "grupoMuscular": "Costas", "grupoExercicio": "Remada Curvada", "estilo": "Puxada Horizontal", "tipo": "composto", "dificuldade": ["Intermediario", "Avancado"], "sugerirRepeticoes": { "Iniciante": "Não recomendado", "Intermediario": "4x8-12", "Avancado": "5x6-10" }, "descricao": "Tronco inclinado a 45°, puxe a barra até o abdômen e retorne, mantendo coluna neutra." },
+    { "nome": "Remada unilateral com halteres", "grupoMuscular": "Costas", "grupoExercicio": "Remada Unilateral", "estilo": "Puxada Horizontal", "tipo": "composto", "dificuldade": ["Iniciante", "Intermediario", "Avancado"], "sugerirRepeticoes": { "Iniciante": "3x10-12", "Intermediario": "4x8-12", "Avancado": "5x6-10" }, "descricao": "Apoie um joelho e mão no banco, puxe o halter com o outro braço até a cintura e retorne controlado." },
+    { "nome": "Remada com halteres em banco inclinado", "grupoMuscular": "Costas", "grupoExercicio": "Remada Inclinada", "estilo": "Puxada Horizontal", "tipo": "composto", "dificuldade": ["Iniciante", "Intermediario", "Avancado"], "sugerirRepeticoes": { "Iniciante": "3x10-12", "Intermediario": "4x8-12", "Avancado": "5x6-10" }, "descricao": "Deitado em banco inclinado, puxe os halteres em direção ao tronco e retorne." },
+    { "nome": "Remada baixa na polia (com triângulo)", "grupoMuscular": "Costas", "grupoExercicio": "Remada Baixa", "estilo": "Puxada Horizontal", "tipo": "composto", "dificuldade": ["Iniciante", "Intermediario", "Avancado"], "sugerirRepeticoes": { "Iniciante": "3x12-15", "Intermediario": "4x10-12", "Avancado": "5x8-10" }, "descricao": "Sentado na polia baixa, puxe o triângulo em direção ao abdômen e retorne controladamente." },
+    { "nome": "Puxada frontal na polia (pegada aberta)", "grupoMuscular": "Costas", "grupoExercicio": "Puxada Frontal", "estilo": "Puxada Vertical", "tipo": "composto", "dificuldade": ["Iniciante", "Intermediario", "Avancado"], "sugerirRepeticoes": { "Iniciante": "3x12-15", "Intermediario": "4x10-12", "Avancado": "5x8-10" }, "descricao": "Sentado, puxe a barra com pegada aberta até a altura do peito e retorne." },
+    { "nome": "Puxada frontal com triângulo (pegada neutra)", "grupoMuscular": "Costas", "grupoExercicio": "Puxada Frontal", "estilo": "Puxada Vertical", "tipo": "composto", "dificuldade": ["Intermediario", "Avancado"], "sugerirRepeticoes": { "Iniciante": "Não recomendado", "Intermediario": "4x10-12", "Avancado": "5x8-10" }, "descricao": "Sentado, puxe o triângulo com pegada neutra até o peito e retorne." },
+    { "nome": "Puxada frontal unilateral na polia", "grupoMuscular": "Costas", "grupoExercicio": "Puxada Frontal", "estilo": "Puxada Vertical", "tipo": "isolador", "dificuldade": ["Intermediario", "Avançado"], "sugerirRepeticoes": { "Iniciante": "Não recomendado", "Intermediario": "4x10-12", "Avancado": "5x8-10" }, "descricao": "Puxe a alça da polia com um braço até a lateral do peito e retorne." },
+    { "nome": "Puxada supinada na polia", "grupoMuscular": "Costas", "grupoExercicio": "Puxada Frontal", "estilo": "Puxada Vertical", "tipo": "composto", "dificuldade": ["Intermediario", "Avançado"], "sugerirRepeticoes": { "Iniciante": "Não recomendado", "Intermediario": "4x10-12", "Avancado": "5x8-10" }, "descricao": "Sentado, puxe a barra com pegada supinada até o peito e retorne." },
+    { "nome": "Remada cavalinho (T-bar)", "grupoMuscular": "Costas", "grupoExercicio": "Remada Cavalinho", "estilo": "Puxada Horizontal", "tipo": "composto", "dificuldade": ["Intermediario", "Avançado"], "sugerirRepeticoes": { "Iniciante": "Não recomendado", "Intermediario": "4x8-12", "Avancado": "5x6-10" }, "descricao": "Com barra em T, puxe a barra em direção ao abdômen e retorne." },
+    { "nome": "Remada no hammer (máquina)", "grupoMuscular": "Costas", "grupoExercicio": "Remada Hammer", "estilo": "Puxada Horizontal", "tipo": "composto", "dificuldade": ["Iniciante", "Intermediario", "Avancado"], "sugerirRepeticoes": { "Iniciante": "3x10-12", "Intermediario": "4x8-12", "Avancado": "5x6-10" }, "descricao": "Sentado, puxe as alças da máquina em direção ao corpo e retorne." },
+    { "nome": "Barra fixa (pegada pronada)", "grupoMuscular": "Costas", "grupoExercicio": "Barra Fixa", "estilo": "Puxada Vertical", "tipo": "composto", "dificuldade": ["Intermediario", "Avancado"], "sugerirRepeticoes": { "Iniciante": "Não recomendado", "Intermediario": "3x6-8", "Avancado": "5x8-12" }, "descricao": "Pendure com as mãos em pegada pronada e puxe o corpo até o queixo ultrapassar a barra, depois desça." },
+    { "nome": "Chin-up (barra fixa pegada supinada)", "grupoMuscular": "Costas", "grupoExercicio": "Barra Fixa", "estilo": "Puxada Vertical", "tipo": "composto", "dificuldade": ["Intermediario", "Avancado"], "sugerirRepeticoes": { "Iniciante": "Não recomendado", "Intermediario": "3x6-8", "Avancado": "5x8-12" }, "descricao": "Pegada supinada na barra fixa, puxe até o queixo ultrapassar a barra e desça controladamente." },
+    { "nome": "Inverted row (remada australiana)", "grupoMuscular": "Costas", "grupoExercicio": "Inverted Row", "estilo": "Puxada Horizontal", "tipo": "composto", "dificuldade": ["Iniciante", "Intermediario", "Avancado"], "sugerirRepeticoes": { "Iniciante": "3x10-15", "Intermediario": "4x12-15", "Avancado": "5x15-20" }, "descricao": "Deitado sob barra baixa, puxe o peito até a barra mantendo o corpo reto e retorne." },
+    { "nome": "Pullover na polia alta com barra reta", "grupoMuscular": "Costas", "grupoExercicio": "Pullover", "estilo": "Puxada Vertical", "tipo": "isolador", "dificuldade": ["Intermediario", "Avancado"], "sugerirRepeticoes": { "Iniciante": "Não recomendado", "Intermediario": "4x10-12", "Avancado": "5x8-10" }, "descricao": "Em pé, puxe a barra da polia alta para baixo até a frente do quadril, mantendo os braços estendidos, e retorne." },
+    { "nome": "Pullover com halteres deitado no banco", "grupoMuscular": "Costas", "grupoExercicio": "Pullover", "estilo": "Puxada Vertical", "tipo": "isolador", "dificuldade": ["Intermediario", "Avancado"], "sugerirRepeticoes": { "Iniciante": "Não recomendado", "Intermediario": "4x10-12", "Avancado": "5x8-10" }, "descricao": "Deitado em banco, segure halter com ambas as mãos, abaixe atrás da cabeça e retorne." },
 
-    function updateAddExerciseGroupOptions() {
-        const selectedGroup = document.getElementById('addExMuscleGroup').value;
-        const addExSelect = document.getElementById('addExSelect');
-        addExSelect.innerHTML = '<option value="">Selecione um Exercício</option>';
+    // PERNAS
+    { "nome": "Agachamento livre", "grupoMuscular": "Quadríceps", "grupoExercicio": "Agachamento", "subGrupo": "Completo", "estilo": "Agachamento", "tipo": "composto", "dificuldade": ["Iniciante", "Intermediario", "Avancado", "Em Casa"], "sugerirRepeticoes": { "Em Casa": "3x15-20", "Iniciante": "3x15-20", "Intermediario": "4x12-15", "Avancado": "5x10-12" }, "descricao": "Em pé, com os pés na largura dos ombros, flexione os joelhos e o quadril, como se fosse sentar. Mantenha a coluna reta." },
+    { "nome": "Afundo", "grupoMuscular": "Quadríceps", "grupoExercicio": "Afundo", "subGrupo": "Completo", "estilo": "Lunge", "tipo": "composto", "dificuldade": ["Iniciante", "Intermediario", "Avancado", "Em Casa"], "sugerirRepeticoes": { "Em Casa": "3x10-12 por perna", "Iniciante": "3x10-12", "Intermediario": "4x8-10", "Avancado": "5x6-8" }, "descricao": "Dê um passo largo à frente com uma perna e abaixe o corpo até que o joelho de trás quase toque o chão. Volte à posição inicial e repita com a outra perna." },
+    { "nome": "Afundo com salto", "grupoMuscular": "Quadríceps", "grupoExercicio": "Afundo", "subGrupo": "Completo", "estilo": "Lunge", "tipo": "composto", "dificuldade": ["Avancado", "Em Casa"], "sugerirRepeticoes": { "Em Casa": "3x8-10 por perna", "Iniciante": "Não recomendado", "Intermediario": "Não recomendado", "Avancado": "4x8-10" }, "descricao": "Execute o afundo e, ao subir, salte, trocando a perna de apoio no ar. Amortize a queda para proteger as articulações." },
+    { "nome": "Ponte de glúteo no solo", "grupoMuscular": "Glúteo", "grupoExercicio": "Ponte de Glúteo", "estilo": "Extensão", "tipo": "composto", "dificuldade": ["Iniciante", "Intermediario", "Em Casa"], "sugerirRepeticoes": { "Em Casa": "3x15-20", "Iniciante": "3x15-20", "Intermediario": "4x12-15", "Avancado": "Não recomendado" }, "descricao": "Deitado no chão, eleve o quadril contraindo os glúteos e retorne controladamente." },
+    { "nome": "Agachamento búlgaro (com cadeira)", "grupoMuscular": "Quadríceps", "grupoExercicio": "Agachamento Búlgaro", "subGrupo": "Completo", "estilo": "Lunge", "tipo": "composto", "dificuldade": ["Intermediario", "Avancado", "Em Casa"], "sugerirRepeticoes": { "Em Casa": "3x8-10 por perna", "Iniciante": "Não recomendado", "Intermediario": "4x10-12", "Avancado": "5x8-10" }, "descricao": "Uma perna apoiada atrás em uma cadeira ou banco, desça o corpo até o joelho da frente formar um ângulo de 90°. Suba e repita." },
+    { "nome": "Elevação de panturrilha em pé", "grupoMuscular": "Panturrilha", "grupoExercicio": "Elevação de Gêmeos", "estilo": "Elevação", "tipo": "isolador", "dificuldade": ["Iniciante", "Intermediario", "Avancado", "Em Casa"], "sugerirRepeticoes": { "Em Casa": "3x20-25", "Iniciante": "3x15-20", "Intermediario": "4x15-20", "Avancado": "5x12-15" }, "descricao": "Em pé, suba na ponta dos pés o máximo que puder e desça lentamente. Use a parede para equilíbrio se necessário." },
+    { "nome": "Agachamento livre com barra nas costas", "grupoMuscular": "Quadríceps", "grupoExercicio": "Agachamento", "subGrupo": "Completo", "estilo": "Agachamento", "tipo": "composto", "dificuldade": ["Intermediario", "Avancado"], "sugerirRepeticoes": { "Iniciante": "Não recomendado", "Intermediario": "4x8-10", "Avancado": "5x6-8" }, "descricao": "Barra apoiada nas costas, flexione os joelhos até 90°, volte estendendo as pernas." },
+    { "nome": "Agachamento frontal com barra", "grupoMuscular": "Quadríceps", "grupoExercicio": "Agachamento Frontal", "subGrupo": "Completo", "estilo": "Agachamento", "tipo": "composto", "dificuldade": ["Intermediario", "Avancado"], "sugerirRepeticoes": { "Iniciante": "Não recomendado", "Intermediario": "4x8-10", "Avancado": "5x6-8" }, "descricao": "Barra apoiada na frente dos ombros, agache até 90° e volte." },
+    { "nome": "Agachamento com halteres ao lado do corpo", "grupoMuscular": "Quadríceps", "grupoExercicio": "Agachamento Halter", "subGrupo": "Completo", "estilo": "Agachamento", "tipo": "composto", "dificuldade": ["Iniciante", "Intermediario"], "sugerirRepeticoes": { "Iniciante": "3x12-15", "Intermediario": "4x10-12", "Avancado": "Não recomendado" }, "descricao": "Segure halteres ao lado do corpo, agache flexionando os joelhos até 90°, suba." },
+    { "nome": "Agachamento goblet com halter à frente", "grupoMuscular": "Quadríceps", "grupoExercicio": "Agachamento Goblet", "subGrupo": "Completo", "estilo": "Agachamento", "tipo": "composto", "dificuldade": ["Iniciante", "Intermediario", "Avançado"], "sugerirRepeticoes": { "Iniciante": "3x12-15", "Intermediario": "4x10-12", "Avancado": "5x8-10" }, "descricao": "Segure um halter próximo ao peito, agache até 90° e retorne." },
+    { "nome": "Passada com barra", "grupoMuscular": "Quadríceps", "grupoExercicio": "Passada", "subGrupo": "Completo", "estilo": "Lunge", "tipo": "composto", "dificuldade": ["Intermediario", "Avançado"], "sugerirRepeticoes": { "Iniciante": "Não recomendado", "Intermediario": "4x10-12", "Avancado": "5x8-10" }, "descricao": "Barra apoiada nas costas, dê passos largos e agache com cada perna alternadamente." },
+    { "nome": "Passada com halteres", "grupoMuscular": "Quadríceps", "grupoExercicio": "Passada", "subGrupo": "Completo", "estilo": "Lunge", "tipo": "composto", "dificuldade": ["Iniciante", "Intermediario", "Avançado"], "sugerirRepeticoes": { "Iniciante": "3x12-15", "Intermediario": "4x10-12", "Avancado": "5x8-10" }, "descricao": "Segure halteres, dê passos largos e agache alternando as pernas." },
+    { "nome": "Step-up com halteres", "grupoMuscular": "Quadríceps", "grupoExercicio": "Step-up", "subGrupo": "Completo", "estilo": "Lunge", "tipo": "composto", "dificuldade": ["Iniciante", "Intermediario", "Avançado"], "sugerirRepeticoes": { "Iniciante": "3x12-15", "Intermediario": "4x10-12", "Avancado": "5x8-10" }, "descricao": "Suba com uma perna em banco alto segurando halteres, volte e alterne." },
+    { "nome": "Leg press 45°", "grupoMuscular": "Quadríceps", "grupoExercicio": "Leg Press", "subGrupo": "Completo", "estilo": "Press", "tipo": "composto", "dificuldade": ["Iniciante", "Intermediario", "Avançado"], "sugerirRepeticoes": { "Iniciante": "3x12-15", "Intermediario": "4x10-12", "Avancado": "5x8-10" }, "descricao": "Sentado no leg press, empurre a plataforma até estender as pernas, flexione sem travar." },
+    { "nome": "Agachamento no Smith", "grupoMuscular": "Quadríceps", "grupoExercicio": "Agachamento", "subGrupo": "Completo", "estilo": "Agachamento", "tipo": "composto", "dificuldade": ["Iniciante", "Intermediario", "Avançado"], "sugerirRepeticoes": { "Iniciante": "3x12-15", "Intermediario": "4x10-12", "Avancado": "5x8-10" }, "descricao": "Barra fixa na máquina, agache até 90° e suba." },
+    { "nome": "Agachamento Hack na máquina", "grupoMuscular": "Quadríceps", "grupoExercicio": "Agachamento Hack", "subGrupo": "Completo", "estilo": "Agachamento", "tipo": "composto", "dificuldade": ["Iniciante", "Intermediario", "Avançado"], "sugerirRepeticoes": { "Iniciante": "3x12-15", "Intermediario": "4x10-12", "Avancado": "5x8-10" }, "descricao": "Sentado, pés na plataforma, flexione os joelhos e estenda." },
+    { "nome": "Cadeira extensora", "grupoMuscular": "Quadríceps", "grupoExercicio": "Cadeira Extensora", "subGrupo": "Completo", "estilo": "Extensão", "tipo": "isolador", "dificuldade": ["Iniciante", "Intermediario", "Avancado"], "sugerirRepeticoes": { "Iniciante": "3x15-20", "Intermediario": "4x12-15", "Avancado": "5x10-12" }, "descricao": "Sentado, estenda os joelhos contra a resistência e retorne." },
+    { "nome": "Extensão de perna unilateral na polia", "grupoMuscular": "Quadríceps", "grupoExercicio": "Extensão de Perna", "subGrupo": "Completo", "estilo": "Extensão", "tipo": "isolador", "dificuldade": ["Intermediario", "Avançado"], "sugerirRepeticoes": { "Iniciante": "Não recomendado", "Intermediario": "4x12-15", "Avancado": "5x10-12" }, "descricao": "Anexe tornozeleira, estenda a perna contra a resistência e retorne." },
+    { "nome": "Cadeira adutora", "grupoMuscular": "Quadríceps", "grupoExercicio": "Cadeira Adutora", "subGrupo": "Adutor", "estilo": "Adução", "tipo": "isolador", "dificuldade": ["Iniciante", "Intermediario", "Avançado"], "sugerirRepeticoes": { "Iniciante": "3x15-20", "Intermediario": "4x12-15", "Avancado": "5x10-12" }, "descricao": "Sentado, pressione as almofadas para dentro e retorne controlado." },
 
-        const equipamentosSelecionados = Array.from(document.querySelectorAll('#equipamentos input[type="checkbox"]:checked'))
-                                            .map(cb => cb.value);
+    // Posterior de Coxa (Isquiotibiais)
+    { "nome": "Cadeira flexora reversa no solo", "grupoMuscular": "Posterior de Coxa", "grupoExercicio": "Cadeira Flexora", "estilo": "Flexão", "tipo": "isolador", "dificuldade": ["Iniciante", "Em Casa"], "sugerirRepeticoes": { "Em Casa": "3x15-20", "Iniciante": "3x15-20", "Intermediario": "Não recomendado", "Avancado": "Não recomendado" }, "descricao": "Deitado de bruços, prenda uma mochila ou use o peso do corpo. Flexione os joelhos levando os calcanhares em direção aos glúteos e retorne." },
+    { "nome": "Stiff com barra", "grupoMuscular": "Posterior de Coxa", "grupoExercicio": "Stiff", "estilo": "Extensão", "tipo": "composto", "dificuldade": ["Intermediario", "Avancado"], "sugerirRepeticoes": { "Iniciante": "Não recomendado", "Intermediario": "4x8-10", "Avancado": "5x6-8" }, "descricao": "Barra à frente, flexione quadril mantendo coluna reta, retorne." },
+    { "nome": "Stiff com halteres", "grupoMuscular": "Posterior de Coxa", "grupoExercicio": "Stiff", "estilo": "Extensão", "tipo": "composto", "dificuldade": ["Intermediario", "Avancado"], "sugerirRepeticoes": { "Iniciante": "Não recomendado", "Intermediario": "4x8-10", "Avancado": "5x6-8" }, "descricao": "Mesma execução do stiff com barra, segurando halteres." },
+    { "nome": "Stiff unilateral", "grupoMuscular": "Posterior de Coxa", "grupoExercicio": "Stiff", "estilo": "Extensão", "tipo": "composto", "dificuldade": ["Avançado"], "sugerirRepeticoes": { "Iniciante": "Não recomendado", "Intermediario": "Não recomendado", "Avancado": "4x8-10" }, "descricao": "Apoie uma perna atrás, flexione quadril segurando halter com a outra perna fixa." },
+    { "nome": "Levantamento terra romeno com barra", "grupoMuscular": "Posterior de Coxa", "grupoExercicio": "Levantamento Terra", "estilo": "Extensão", "tipo": "composto", "dificuldade": ["Intermediario", "Avançado"], "sugerirRepeticoes": { "Iniciante": "Não recomendado", "Intermediario": "4x8-10", "Avancado": "5x6-8" }, "descricao": "Barra nas mãos, flexione quadril mantendo joelhos semiflexionados e coluna reta, retorne." },
+    { "nome": "Levantamento terra unilateral com halter", "grupoMuscular": "Posterior de Coxa", "grupoExercicio": "Levantamento Terra", "estilo": "Extensão", "tipo": "composto", "dificuldade": ["Avançado"], "sugerirRepeticoes": { "Iniciante": "Não recomendado", "Intermediario": "Não recomendado", "Avancado": "4x8-10" }, "descricao": "Apoie uma perna no chão, flexione quadril segurando halter com a outra perna estendida para trás." },
+    { "nome": "Mesa flexora deitado", "grupoMuscular": "Posterior de Coxa", "grupoExercicio": "Mesa Flexora", "estilo": "Flexão", "tipo": "isolador", "dificuldade": ["Iniciante", "Intermediario", "Avancado"], "sugerirRepeticoes": { "Iniciante": "3x15-20", "Intermediario": "4x12-15", "Avancado": "5x10-12" }, "descricao": "Deitado, flexione joelhos contra resistência e retorne." },
+    { "nome": "Flexora sentada", "grupoMuscular": "Posterior de Coxa", "grupoExercicio": "Cadeira Flexora", "estilo": "Flexão", "tipo": "isolador", "dificuldade": ["Iniciante", "Intermediario", "Avancado"], "sugerirRepeticoes": { "Iniciante": "3x15-20", "Intermediario": "4x12-15", "Avancado": "5x10-12" }, "descricao": "Sentado, flexione os joelhos contra resistência e retorne." },
+    { "nome": "Flexora em pé (unilateral)", "grupoMuscular": "Posterior de Coxa", "grupoExercicio": "Flexora em Pé", "estilo": "Flexão", "tipo": "isolador", "dificuldade": ["Intermediario", "Avançado"], "sugerirRepeticoes": { "Iniciante": "Não recomendado", "Intermediario": "4x12-15", "Avancado": "5x10-12" }, "descricao": "Em pé, flexione o joelho contra resistência com uma perna e retorne." },
+    { "nome": "Flexão de joelho com polia baixa e tornozeleira", "grupoMuscular": "Posterior de Coxa", "grupoExercicio": "Flexão de Joelho", "estilo": "Flexão", "tipo": "isolador", "dificuldade": ["Intermediario", "Avançado"], "sugerirRepeticoes": { "Iniciante": "Não recomendado", "Intermediario": "4x12-15", "Avancado": "5x10-12" }, "descricao": "Anexe tornozeleira, flexione o joelho contra a resistência da polia e retorne." },
+    { "nome": "Nordic ham curl", "grupoMuscular": "Posterior de Coxa", "grupoExercicio": "Nordic Curl", "estilo": "Flexão", "tipo": "composto", "dificuldade": ["Avançado"], "sugerirRepeticoes": { "Iniciante": "Não recomendado", "Intermediario": "Não recomendado", "Avancado": "4x6-8" }, "descricao": "Joelhos no chão, controle a descida do corpo à frente, usando os isquiotibiais para frear." },
 
-        const filteredExercises = exerciciosDB.filter(ex =>
-            (selectedGroup === "" || ex.grupoPrimario === selectedGroup) &&
-            equipamentosSelecionados.some(eq => Array.isArray(ex.equipamento) ? ex.equipamento.includes(eq) : ex.equipamento === eq)
-        );
+    // Glúteos
+    { "nome": "Elevação pélvica (hip thrust) com barra", "grupoMuscular": "Glúteo", "grupoExercicio": "Elevação Pélvica", "estilo": "Extensão", "tipo": "composto", "dificuldade": ["Intermediario", "Avancado"], "sugerirRepeticoes": { "Iniciante": "Não recomendado", "Intermediario": "4x10-12", "Avancado": "5x8-10" }, "descricao": "Apoie as costas em banco, barra sobre o quadril, eleve o quadril contra a barra e retorne." },
+    { "nome": "Elevação pélvica com halter", "grupoMuscular": "Glúteo", "grupoExercicio": "Elevação Pélvica", "estilo": "Extensão", "tipo": "composto", "dificuldade": ["Iniciante", "Intermediario"], "sugerirRepeticoes": { "Iniciante": "3x15-20", "Intermediario": "4x12-15", "Avancado": "Não recomendado" }, "descricao": "Apoie as costas no chão, segure halter sobre o quadril, eleve o quadril e retorne." },
+    { "nome": "Ponte de glúteo no solo (com ou sem carga)", "grupoMuscular": "Glúteo", "grupoExercicio": "Ponte de Glúteo", "estilo": "Extensão", "tipo": "composto", "dificuldade": ["Iniciante", "Intermediario", "Em Casa"], "sugerirRepeticoes": { "Em Casa": "3x20-25", "Iniciante": "3x15-20", "Intermediario": "4x12-15", "Avancado": "Não recomendado" }, "descricao": "Deitado no chão, eleve o quadril contraindo glúteos e retorne.", "sexoExclusivo": "Feminino" },
+    { "nome": "Kickback com tornozeleira na polia", "grupoMuscular": "Glúteo", "grupoExercicio": "Kickback", "estilo": "Extensão", "tipo": "isolador", "dificuldade": ["Intermediario", "Avançado"], "sugerirRepeticoes": { "Iniciante": "Não recomendado", "Intermediario": "4x12-15", "Avancado": "5x10-12" }, "descricao": "Em 4 apoios, com tornozeleira, estenda a perna contra resistência da polia e retorne.", "sexoExclusivo": "Feminino" },
+    { "nome": "Extensão de quadril na polia com perna estendida", "grupoMuscular": "Glúteo", "grupoExercicio": "Extensão de Quadril", "estilo": "Extensão", "tipo": "isolador", "dificuldade": ["Intermediario", "Avançado"], "sugerirRepeticoes": { "Iniciante": "Não recomendado", "Intermediario": "4x12-15", "Avancado": "5x10-12" }, "descricao": "Em pé, com tornozeleira, estenda a perna para trás contra a resistência da polia.", "sexoExclusivo": "Feminino" },
+    { "nome": "Glúteo com polia em 4 apoios", "grupoMuscular": "Glúteo", "grupoExercicio": "Glúteo Polia", "estilo": "Extensão", "tipo": "isolador", "dificuldade": ["Intermediario", "Avançado"], "sugerirRepeticoes": { "Iniciante": "Não recomendado", "Intermediario": "4x12-15", "Avancado": "5x10-12" }, "descricao": "Apoiado em 4 apoios, empurre a perna com tornozeleira para trás contra a polia.", "sexoExclusivo": "Feminino" },
+    { "nome": "Máquina glúteo (extensão de quadril)", "grupoMuscular": "Glúteo", "grupoExercicio": "Glúteo Máquina", "estilo": "Extensão", "tipo": "isolador", "dificuldade": ["Iniciante", "Intermediario", "Avançado"], "sugerirRepeticoes": { "Iniciante": "3x15-20", "Intermediario": "4x12-15", "Avancado": "5x10-12" }, "descricao": "Sentado ou em 4 apoios, empurre a alavanca para trás contra a resistência." },
+    { "nome": "Agachamento sumô com barra", "grupoMuscular": "Glúteo", "grupoExercicio": "Agachamento Sumô", "estilo": "Agachamento", "tipo": "composto", "dificuldade": ["Intermediario", "Avançado"], "sugerirRepeticoes": { "Iniciante": "Não recomendado", "Intermediario": "4x8-10", "Avancado": "5x6-8" }, "descricao": "Pés mais afastados que o quadril, barra no chão, levante mantendo coluna neutra." },
+    { "nome": "Agachamento sumô com halter entre as pernas", "grupoMuscular": "Glúteo", "grupoExercicio": "Agachamento Sumô", "estilo": "Agachamento", "tipo": "composto", "dificuldade": ["Iniciante", "Intermediario"], "sugerirRepeticoes": { "Iniciante": "3x12-15", "Intermediario": "4x10-12", "Avancado": "Não recomendado" }, "descricao": "Segure halter entre as pernas, pés afastados, agache e suba." },
+    { "nome": "Agachamento lateral com halteres", "grupoMuscular": "Glúteo", "grupoExercicio": "Agachamento Lateral", "estilo": "Agachamento", "tipo": "composto", "dificuldade": ["Iniciante", "Intermediario"], "sugerirRepeticoes": { "Iniciante": "3x12-15", "Intermediario": "4x10-12", "Avancado": "Não recomendado" }, "descricao": "Dê passos laterais segurando halteres, agache e volte.", "sexoExclusivo": "Feminino" },
+    { "nome": "Passada no step", "grupoMuscular": "Glúteo", "grupoExercicio": "Passada", "estilo": "Lunge", "tipo": "composto", "dificuldade": ["Iniciante", "Intermediario", "Avançado"], "sugerirRepeticoes": { "Iniciante": "3x12-15", "Intermediario": "4x10-12", "Avancado": "5x8-10" }, "descricao": "Suba em banco com uma perna, alternando, segurando halteres." },
+    { "nome": "Glute bridge com isometria", "grupoMuscular": "Glúteo", "grupoExercicio": "Ponte de Glúteo", "estilo": "Isometria", "tipo": "composto", "dificuldade": ["Iniciante", "Intermediario"], "sugerirRepeticoes": { "Iniciante": "3x15-20s", "Intermediario": "4x12-15s", "Avancado": "Não recomendado" }, "descricao": "Eleve quadril, mantenha isometria (contração) por 20-30s, retorne.", "sexoExclusivo": "Feminino" },
+    { "nome": "Agachamento com elástico ou com isometria prolongada", "grupoMuscular": "Glúteo", "grupoExercicio": "Agachamento", "estilo": "Agachamento", "tipo": "composto", "dificuldade": ["Iniciante", "Intermediario"], "sugerirRepeticoes": { "Iniciante": "3x15-20", "Intermediario": "4x15-20", "Avancado": "Não recomendado" }, "descricao": "Agache com elástico ao redor dos joelhos, mantenha contração isométrica.", "sexoExclusivo": "Feminino" },
+    { "nome": "Cadeira abdutora", "grupoMuscular": "Glúteo", "grupoExercicio": "Cadeira Abdutora", "estilo": "Abdução", "tipo": "isolador", "dificuldade": ["Iniciante", "Intermediario", "Avançado"], "sugerirRepeticoes": { "Iniciante": "3x15-20", "Intermediario": "4x12-15", "Avancado": "5x10-12" }, "descricao": "Sentado, afaste as pernas contra resistência e retorne." },
+    { "nome": "Abdução de perna na polia", "grupoMuscular": "Glúteo", "grupoExercicio": "Abdução de Perna", "estilo": "Abdução", "tipo": "isolador", "dificuldade": ["Intermediario", "Avançado"], "sugerirRepeticoes": { "Iniciante": "Não recomendado", "Intermediario": "4x12-15", "Avancado": "5x10-12" }, "descricao": "Em pé, com tornozeleira, afaste a perna contra a resistência da polia.", "sexoExclusivo": "Feminino" },
 
-        filteredExercises.sort((a, b) => a.nome.localeCompare(b.nome));
+    // OMBROS
+    { "nome": "Flexão com Pike", "grupoMuscular": "Ombro", "grupoExercicio": "Flexão Pike", "subGrupo": "Anterior", "estilo": "Press", "tipo": "composto", "dificuldade": ["Intermediario", "Avancado", "Em Casa"], "sugerirRepeticoes": { "Em Casa": "3x8-12", "Iniciante": "Não recomendado", "Intermediario": "4x10-12", "Avancado": "5x8-10" }, "descricao": "Em posição de prancha, levante o quadril formando um 'V' invertido com o corpo. Flexione os cotovelos para levar a cabeça em direção ao chão e empurre de volta." },
+    { "nome": "Elevação frontal com halteres", "grupoMuscular": "Ombro", "grupoExercicio": "Elevação Frontal", "subGrupo": "Anterior", "estilo": "Elevação", "tipo": "isolador", "dificuldade": ["Iniciante", "Intermediario", "Avancado", "Em Casa"], "sugerirRepeticoes": { "Em Casa": "3x12-15", "Iniciante": "3x15-20", "Intermediario": "4x12-15", "Avancado": "5x10-12" }, "descricao": "Em pé, levante os halteres (ou garrafas de água/sacos de arroz) à frente até a altura dos ombros e desça." },
+    { "nome": "Elevação lateral com elástico", "grupoMuscular": "Ombro", "grupoExercicio": "Elevação Lateral", "subGrupo": "Lateral", "estilo": "Elevação", "tipo": "isolador", "dificuldade": ["Iniciante", "Intermediario", "Em Casa"], "sugerirRepeticoes": { "Em Casa": "3x15-20", "Iniciante": "3x15-20", "Intermediario": "4x12-15", "Avancado": "Não recomendado" }, "descricao": "Pise em um elástico com os pés, segure as pontas e levante os braços lateralmente até a altura dos ombros." },
+    { "nome": "Elevação lateral com halteres", "grupoMuscular": "Ombro", "grupoExercicio": "Elevação Lateral", "subGrupo": "Lateral", "estilo": "Elevação", "tipo": "isolador", "dificuldade": ["Iniciante", "Intermediario", "Avancado", "Em Casa"], "sugerirRepeticoes": { "Em Casa": "3x12-15", "Iniciante": "3x15-20", "Intermediario": "4x12-15", "Avancado": "5x10-12" }, "descricao": "Em pé, levante os halteres (ou garrafas de água/sacos de arroz) lateralmente até a altura dos ombros e desça." },
+    { "nome": "Desenvolvimento militar com barra", "grupoMuscular": "Ombro", "grupoExercicio": "Desenvolvimento", "subGrupo": "Anterior", "estilo": "Press", "tipo": "composto", "dificuldade": ["Intermediario", "Avancado"], "sugerirRepeticoes": { "Iniciante": "Não recomendado", "Intermediario": "4x8-10", "Avancado": "5x6-8" }, "descricao": "Sentado ou em pé, empurre a barra do nível dos ombros para cima, estendendo os braços." },
+    { "nome": "Desenvolvimento com halteres sentado", "grupoMuscular": "Ombro", "grupoExercicio": "Desenvolvimento", "subGrupo": "Anterior", "estilo": "Press", "tipo": "composto", "dificuldade": ["Iniciante", "Intermediario", "Avancado"], "sugerirRepeticoes": { "Iniciante": "3x12-15", "Intermediario": "4x10-12", "Avancado": "5x8-10" }, "descricao": "Sentado, empurre os halteres do nível dos ombros para cima, estendendo os braços." },
+    { "nome": "Desenvolvimento Arnold com halteres", "grupoMuscular": "Ombro", "grupoExercicio": "Desenvolvimento Arnold", "subGrupo": "Anterior", "estilo": "Press", "tipo": "composto", "dificuldade": ["Intermediario", "Avançado"], "sugerirRepeticoes": { "Iniciante": "Não recomendado", "Intermediario": "4x10-12", "Avancado": "5x8-10" }, "descricao": "Sentado, inicie com halteres na frente do peito, gire e empurre para cima." },
+    { "nome": "Desenvolvimento na máquina", "grupoMuscular": "Ombro", "grupoExercicio": "Desenvolvimento Máquina", "subGrupo": "Anterior", "estilo": "Press", "tipo": "composto", "dificuldade": ["Iniciante", "Intermediario", "Avançado"], "sugerirRepeticoes": { "Iniciante": "3x15-20", "Intermediario": "4x12-15", "Avancado": "5x10-12" }, "descricao": "Empurre as alavancas da máquina para cima até estender os braços." },
+    { "nome": "Elevação lateral na polia baixa", "grupoMuscular": "Ombro", "grupoExercicio": "Elevação Lateral", "subGrupo": "Lateral", "estilo": "Elevação", "tipo": "isolador", "dificuldade": ["Intermediario", "Avançado"], "sugerirRepeticoes": { "Iniciante": "Não recomendado", "Intermediario": "4x12-15", "Avancado": "5x10-12" }, "descricao": "Com cabo na polia baixa, levante o braço lateralmente até o ombro." },
+    { "nome": "Elevação frontal na polia com corda", "grupoMuscular": "Ombro", "grupoExercicio": "Elevação Frontal", "subGrupo": "Anterior", "estilo": "Elevação", "tipo": "isolador", "dificuldade": ["Intermediario", "Avançado"], "sugerirRepeticoes": { "Iniciante": "Não recomendado", "Intermediario": "4x12-15", "Avancado": "5x10-12" }, "descricao": "Com corda na polia baixa, levante os braços à frente até o ombro e retorne." },
+    { "nome": "Crucifixo invertido com halteres", "grupoMuscular": "Ombro", "grupoExercicio": "Crucifixo Invertido", "subGrupo": "Posterior", "estilo": "Isolador", "tipo": "isolador", "dificuldade": ["Intermediario", "Avançado"], "sugerirRepeticoes": { "Iniciante": "Não recomendado", "Intermediario": "4x12-15", "Avancado": "5x10-12" }, "descricao": "Inclinado à frente, abra os braços com halteres para trabalhar a parte posterior do ombro." },
+    { "nome": "Crucifixo invertido na polia", "grupoMuscular": "Ombro", "grupoExercicio": "Crucifixo Invertido", "subGrupo": "Posterior", "estilo": "Isolador", "tipo": "isolador", "dificuldade": ["Intermediario", "Avançado"], "sugerirRepeticoes": { "Iniciante": "Não recomendado", "Intermediario": "4x12-15", "Avancado": "5x10-12" }, "descricao": "De frente para a polia, puxe os cabos lateralmente com braços estendidos." },
+    { "nome": "Posterior no peck-deck invertido", "grupoMuscular": "Ombro", "grupoExercicio": "Posterior Peck-Deck", "subGrupo": "Posterior", "estilo": "Isolador", "tipo": "isolador", "dificuldade": ["Iniciante", "Intermediario", "Avançado"], "sugerirRepeticoes": { "Iniciante": "3x15-20", "Intermediario": "4x12-15", "Avancado": "5x10-12" }, "descricao": "Sentado, abra os braços para trás contra resistência da máquina." },
+    { "nome": "Remada alta com barra", "grupoMuscular": "Ombro", "grupoExercicio": "Remada Alta", "subGrupo": "Completo", "estilo": "Puxada", "tipo": "composto", "dificuldade": ["Intermediario", "Avançado"], "sugerirRepeticoes": { "Iniciante": "Não recomendado", "Intermediario": "4x8-10", "Avancado": "5x6-8" }, "descricao": "Segure barra com pegada pronada, puxe até o peito, cotovelos elevados." },
+    { "nome": "Remada alta com halteres", "grupoMuscular": "Ombro", "grupoExercicio": "Remada Alta", "subGrupo": "Completo", "estilo": "Puxada", "tipo": "composto", "dificuldade": ["Intermediario", "Avançado"], "sugerirRepeticoes": { "Iniciante": "Não recomendado", "Intermediario": "4x10-12", "Avancado": "5x8-10" }, "descricao": "Levante halteres lateralmente até o nível dos ombros, cotovelos altos." },
 
-        filteredExercises.forEach(ex => {
-            const option = document.createElement('option');
-            option.value = ex.nome;
-            option.innerText = `${ex.nome} (${Array.isArray(ex.equipamento) ? ex.equipamento.join(', ') : ex.equipamento})`;
-            addExSelect.appendChild(option);
-        });
-    }
+    // TRÍCEPS
+    { "nome": "Mergulho no banco", "grupoMuscular": "Tríceps", "grupoExercicio": "Mergulho", "estilo": "Press", "tipo": "composto", "dificuldade": ["Iniciante", "Intermediario", "Em Casa"], "sugerirRepeticoes": { "Em Casa": "3x10-12", "Iniciante": "3x12-15", "Intermediario": "4x10-12", "Avancado": "Não recomendado" }, "descricao": "Apoie as mãos em um banco ou cadeira, flexione os cotovelos e estenda para levantar o corpo." },
+    { "nome": "Tríceps coice com halteres", "grupoMuscular": "Tríceps", "grupoExercicio": "Tríceps Coice", "estilo": "Extensão", "tipo": "isolador", "dificuldade": ["Intermediario", "Avançado", "Em Casa"], "sugerirRepeticoes": { "Em Casa": "3x12-15", "Iniciante": "Não recomendado", "Intermediario": "4x12-15", "Avancado": "5x10-12" }, "descricao": "Inclinado à frente, estenda o cotovelo para trás segurando um halter ou objeto pesado." },
+    { "nome": "Tríceps testa com barra reta", "grupoMuscular": "Tríceps", "grupoExercicio": "Tríceps Testa", "estilo": "Extensão", "tipo": "isolador", "dificuldade": ["Intermediario", "Avancado"], "sugerirRepeticoes": { "Iniciante": "Não recomendado", "Intermediario": "4x10-12", "Avancado": "5x8-10" }, "descricao": "Deitado, segure barra reta e flexione os cotovelos levando a barra próxima à testa." },
+    { "nome": "Tríceps testa com barra W (EZ)", "grupoMuscular": "Tríceps", "grupoExercicio": "Tríceps Testa", "estilo": "Extensão", "tipo": "isolador", "dificuldade": ["Intermediario", "Avancado"], "sugerirRepeticoes": { "Iniciante": "Não recomendado", "Intermediario": "4x10-12", "Avancado": "5x8-10" }, "descricao": "Igual ao tríceps testa com barra reta, porém com barra W para maior conforto." },
+    { "nome": "Tríceps francês com halteres (duas mãos)", "grupoMuscular": "Tríceps", "grupoExercicio": "Tríceps Francês", "estilo": "Extensão", "tipo": "isolador", "dificuldade": ["Intermediario", "Avançado"], "sugerirRepeticoes": { "Iniciante": "Não recomendado", "Intermediario": "4x12-15", "Avancado": "5x10-12" }, "descricao": "Sentado ou deitado, segure halter com ambas as mãos, flexione e estenda os cotovelos." },
+    { "nome": "Tríceps francês unilateral com halter", "grupoMuscular": "Tríceps", "grupoExercicio": "Tríceps Francês", "estilo": "Extensão", "tipo": "isolador", "dificuldade": ["Intermediario", "Avançado"], "sugerirRepeticoes": { "Iniciante": "Não recomendado", "Intermediario": "4x12-15", "Avancado": "5x10-12" }, "descricao": "Sentado, segure halter com uma mão, flexione e estenda o cotovelo." },
+    { "nome": "Tríceps com barra reta na polia", "grupoMuscular": "Tríceps", "grupoExercicio": "Tríceps Polia", "estilo": "Extensão", "tipo": "isolador", "dificuldade": ["Iniciante", "Intermediario", "Avancado"], "sugerirRepeticoes": { "Iniciante": "3x15-20", "Intermediario": "4x12-15", "Avancado": "5x10-12" }, "descricao": "Em pé, empurre barra reta para baixo estendendo os cotovelos." },
+    { "nome": "Tríceps com corda na polia", "grupoMuscular": "Tríceps", "grupoExercicio": "Tríceps Polia", "estilo": "Extensão", "tipo": "isolador", "dificuldade": ["Iniciante", "Intermediario", "Avancado"], "sugerirRepeticoes": { "Iniciante": "3x15-20", "Intermediario": "4x12-15", "Avancado": "5x10-12" }, "descricao": "Empurre a corda para baixo separando as pontas na extensão do cotovelo." },
+    { "nome": "Tríceps unilateral na polia", "grupoMuscular": "Tríceps", "grupoExercicio": "Tríceps Polia", "estilo": "Extensão", "tipo": "isolador", "dificuldade": ["Intermediario", "Avançado"], "sugerirRepeticoes": { "Iniciante": "Não recomendado", "Intermediario": "4x12-15", "Avancado": "5x10-12" }, "descricao": "Empurre o cabo com uma mão estendendo o cotovelo." },
+    { "nome": "Tríceps testa com corda na polia", "grupoMuscular": "Tríceps", "grupoExercicio": "Tríceps Testa", "estilo": "Extensão", "tipo": "isolador", "dificuldade": ["Intermediario", "Avançado"], "sugerirRepeticoes": { "Iniciante": "Não recomendado", "Intermediario": "4x12-15", "Avancado": "5x10-12" }, "descricao": "Deitado, segure a corda e flexione os cotovelos levando próximo à testa, estenda." },
+    { "nome": "Paralelas (dips)", "grupoMuscular": "Tríceps", "grupoExercicio": "Paralelas", "estilo": "Press", "tipo": "composto", "dificuldade": ["Intermediario", "Avançado"], "sugerirRepeticoes": { "Iniciante": "Não recomendado", "Intermediario": "3x8-12", "Avancado": "4x8-12" }, "descricao": "Apoiado nas barras paralelas, flexione e estenda os cotovelos." },
 
-    function addNewExerciseToDay() {
-        const selectedExerciseName = document.getElementById('addExSelect').value;
-        if (!selectedExerciseName) {
-            showModal("Por favor, selecione um exercício para adicionar.");
-            return;
-        }
+    // BÍCEPS
+    { "nome": "Rosca bíceps com toalha", "grupoMuscular": "Bíceps", "grupoExercicio": "Rosca Bíceps", "estilo": "Flexão", "tipo": "isolador", "dificuldade": ["Iniciante", "Em Casa"], "sugerirRepeticoes": { "Em Casa": "3x15-20", "Iniciante": "3x15-20", "Intermediario": "Não recomendado", "Avancado": "Não recomendado" }, "descricao": "Pise em uma toalha com o pé, segure as pontas e puxe para cima, simulando uma rosca direta." },
+    { "nome": "Rosca bíceps com elástico", "grupoMuscular": "Bíceps", "grupoExercicio": "Rosca Bíceps", "estilo": "Flexão", "tipo": "isolador", "dificuldade": ["Iniciante", "Em Casa"], "sugerirRepeticoes": { "Em Casa": "3x15-20", "Iniciante": "3x15-20", "Intermediario": "Não recomendado", "Avancado": "Não recomendado" }, "descricao": "Pise no elástico com os pés e segure as extremidades. Puxe o elástico para cima, flexionando os cotovelos." },
+    { "nome": "Rosca com mochila (carga)", "grupoMuscular": "Bíceps", "grupoExercicio": "Rosca Bíceps", "estilo": "Flexão", "tipo": "isolador", "dificuldade": ["Iniciante", "Intermediario", "Em Casa"], "sugerirRepeticoes": { "Em Casa": "3x10-12", "Iniciante": "3x12-15", "Intermediario": "4x10-12", "Avancado": "Não recomendado" }, "descricao": "Segure uma mochila com peso e puxe para cima, flexionando os cotovelos." },
+    { "nome": "Rosca direta com barra reta", "grupoMuscular": "Bíceps", "grupoExercicio": "Rosca Direta", "estilo": "Flexão", "tipo": "composto", "dificuldade": ["Intermediario", "Avancado"], "sugerirRepeticoes": { "Iniciante": "Não recomendado", "Intermediario": "4x10-12", "Avancado": "5x8-10" }, "descricao": "Em pé, segure barra reta e flexione os cotovelos elevando a barra." },
+    { "nome": "Rosca com barra W (EZ)", "grupoMuscular": "Bíceps", "grupoExercicio": "Rosca Direta", "estilo": "Flexão", "tipo": "composto", "dificuldade": ["Intermediario", "Avancado"], "sugerirRepeticoes": { "Iniciante": "Não recomendado", "Intermediario": "4x10-12", "Avancado": "5x8-10" }, "descricao": "Igual à rosca direta, mas com barra W para maior conforto." },
+    { "nome": "Rosca concentrada com halteres", "grupoMuscular": "Bíceps", "grupoExercicio": "Rosca Concentrada", "estilo": "Flexão", "tipo": "isolador", "dificuldade": ["Iniciante", "Intermediario", "Avançado"], "sugerirRepeticoes": { "Iniciante": "3x12-15", "Intermediario": "4x10-12", "Avancado": "5x8-10" }, "descricao": "Sentado, apoie o braço na coxa e flexione o cotovelo com halter." },
+    { "nome": "Rosca alternada com halteres", "grupoMuscular": "Bíceps", "grupoExercicio": "Rosca Alternada", "estilo": "Flexão", "tipo": "composto", "dificuldade": ["Iniciante", "Intermediario", "Avançado"], "sugerirRepeticoes": { "Iniciante": "3x12-15", "Intermediario": "4x10-12", "Avancado": "5x8-10" }, "descricao": "Em pé, flexione alternadamente os cotovelos com halteres." },
+    { "nome": "Rosca martelo com halteres", "grupoMuscular": "Bíceps", "grupoExercicio": "Rosca Martelo", "estilo": "Flexão", "tipo": "composto", "dificuldade": ["Iniciante", "Intermediario", "Avançado"], "sugerirRepeticoes": { "Iniciante": "3x12-15", "Intermediario": "4x10-12", "Avancado": "5x8-10" }, "descricao": "Em pé, segure halteres com pegada neutra e flexione os cotovelos." },
+    { "nome": "Rosca Scott (bilateral e unilateral) com barra W ou na máquina", "grupoMuscular": "Bíceps", "grupoExercicio": "Rosca Scott", "estilo": "Flexão", "tipo": "isolador", "dificuldade": ["Intermediario", "Avançado"], "sugerirRepeticoes": { "Iniciante": "Não recomendado", "Intermediario": "4x10-12", "Avancado": "5x8-10" }, "descricao": "Apoiado no banco Scott, flexione os cotovelos levantando barra ou halter." },
+    { "nome": "Rosca no banco inclinado com halteres", "grupoMuscular": "Bíceps", "grupoExercicio": "Rosca Inclinado", "estilo": "Flexão", "tipo": "isolador", "dificuldade": ["Intermediario", "Avançado"], "sugerirRepeticoes": { "Iniciante": "Não recomendado", "Intermediario": "4x10-12", "Avancado": "5x8-10" }, "descricao": "Sentado inclinado, flexione os cotovelos levantando halteres." },
+    { "nome": "Rosca direta na polia com barra", "grupoMuscular": "Bíceps", "grupoExercicio": "Rosca Polia", "estilo": "Flexão", "tipo": "isolador", "dificuldade": ["Iniciante", "Intermediario", "Avançado"], "sugerirRepeticoes": { "Iniciante": "3x15-20", "Intermediario": "4x12-15", "Avancado": "5x10-12" }, "descricao": "Em pé, puxe a barra da polia flexionando os cotovelos." },
+    { "nome": "Rosca unilateral na polia", "grupoMuscular": "Bíceps", "grupoExercicio": "Rosca Polia", "estilo": "Flexão", "tipo": "isolador", "dificuldade": ["Intermediario", "Avançado"], "sugerirRepeticoes": { "Iniciante": "Não recomendado", "Intermediario": "4x12-15", "Avancado": "5x10-12" }, "descricao": "Flexione um cotovelo puxando o cabo da polia com uma mão." },
+    { "nome": "Rosca martelo na polia com corda", "grupoMuscular": "Bíceps", "grupoExercicio": "Rosca Martelo", "estilo": "Flexão", "tipo": "isolador", "dificuldade": ["Intermediario", "Avançado"], "sugerirRepeticoes": { "Iniciante": "Não recomendado", "Intermediario": "4x12-15", "Avancado": "5x10-12" }, "descricao": "Segure corda, puxe flexionando os cotovelos com pegada neutra." },
 
-        const day = generatedTrainingPlan.find(d => d.dayLabel === currentAddExerciseDayLabel);
-        if (!day) {
-            showModal("Erro: Dia de treino não encontrado.");
-            return;
-        }
+    // PANTURRILHAS
+    { "nome": "Elevação de gêmeos em pé com barra", "grupoMuscular": "Panturrilha", "grupoExercicio": "Elevação de Gêmeos", "estilo": "Elevação", "tipo": "isolador", "dificuldade": ["Intermediario", "Avancado"], "sugerirRepeticoes": { "Iniciante": "Não recomendado", "Intermediario": "4x15-20", "Avancado": "5x12-15" }, "descricao": "Em pé, suba e desça na ponta dos pés com barra apoiada nas costas." },
+    { "nome": "Elevação de gêmeos com halteres", "grupoMuscular": "Panturrilha", "grupoExercicio": "Elevação de Gêmeos", "estilo": "Elevação", "tipo": "isolador", "dificuldade": ["Iniciante", "Intermediario"], "sugerirRepeticoes": { "Iniciante": "3x15-20", "Intermediario": "4x15-20", "Avancado": "Não recomendado" }, "descricao": "Segure halteres e suba e desça na ponta dos pés." },
+    { "nome": "Elevação de gêmeos na máquina em pé", "grupoMuscular": "Panturrilha", "grupoExercicio": "Elevação de Gêmeos", "estilo": "Elevação", "tipo": "isolador", "dificuldade": ["Iniciante", "Intermediario", "Avancado"], "sugerirRepeticoes": { "Iniciante": "3x20", "Intermediario": "4x15-20", "Avancado": "5x12-15" }, "descricao": "Em pé, empurre a plataforma para cima ficando na ponta dos pés." },
+    { "nome": "Elevação de gêmeos sentado com halter nos joelhos", "grupoMuscular": "Panturrilha", "grupoExercicio": "Elevação de Gêmeos", "estilo": "Elevação", "tipo": "isolador", "dificuldade": ["Iniciante", "Intermediario"], "sugerirRepeticoes": { "Iniciante": "3x20", "Intermediario": "4x15-20", "Avancado": "Não recomendado" }, "descricao": "Sentado, com halter nos joelhos, eleve os calcanhares." },
+    { "nome": "Elevação de gêmeos na máquina sentada", "grupoMuscular": "Panturrilha", "grupoExercicio": "Elevação de Gêmeos", "estilo": "Elevação", "tipo": "isolador", "dificuldade": ["Iniciante", "Intermediario", "Avancado"], "sugerirRepeticoes": { "Iniciante": "3x20", "Intermediario": "4x15-20", "Avancado": "5x12-15" }, "descricao": "Sentado, empurre a plataforma para cima elevando os calcanhares." },
+    { "nome": "Panturrilha no leg press", "grupoMuscular": "Panturrilha", "grupoExercicio": "Elevação de Gêmeos", "estilo": "Elevação", "tipo": "isolador", "dificuldade": ["Iniciante", "Intermediario", "Avançado"], "sugerirRepeticoes": { "Iniciante": "3x20", "Intermediario": "4x15-20", "Avancado": "5x12-15" }, "descricao": "Empurre a plataforma do leg press apenas com a ponta dos pés." },
+    { "nome": "Pular corda", "grupoMuscular": "Panturrilha", "grupoExercicio": "Elevação de Gêmeos", "estilo": "Cardio", "tipo": "isolador", "dificuldade": ["Iniciante", "Intermediario", "Avancado", "Em Casa"], "sugerirRepeticoes": { "Em Casa": "3x1min", "Iniciante": "3x30s", "Intermediario": "4x45s", "Avancado": "5x1min" }, "descricao": "Salte repetidamente com corda, focando na ponta dos pés." },
 
-        const exerciseToAdd = exerciciosDB.find(ex => ex.nome === selectedExerciseName);
-        if (!exerciseToAdd) {
-            showModal("Erro: Exercício selecionado não encontrado na base de dados (Firestore).");
-            return;
-        }
+    // ABDÔMEN
+    { "nome": "Abdominal crunch no solo", "grupoMuscular": "Core", "grupoExercicio": "Abdominal Crunch", "estilo": "Flexão", "tipo": "composto", "dificuldade": ["Iniciante", "Intermediario", "Avancado", "Em Casa"], "sugerirRepeticoes": { "Em Casa": "3x20", "Iniciante": "3x15-20", "Intermediario": "4x20-25", "Avancado": "5x25-30" }, "descricao": "Deitado, eleve o tronco contraindo o abdômen e volte." },
+    { "nome": "Abdominal infra com elevação de pernas", "grupoMuscular": "Core", "grupoExercicio": "Abdominal Infra", "estilo": "Flexão", "tipo": "isolador", "dificuldade": ["Iniciante", "Intermediario", "Avancado", "Em Casa"], "sugerirRepeticoes": { "Em Casa": "3x15", "Iniciante": "3x12-15", "Intermediario": "4x15-20", "Avancado": "5x20-25" }, "descricao": "Deitado, eleve as pernas retas e desça controlado." },
+    { "nome": "Abdominal canivete", "grupoMuscular": "Core", "grupoExercicio": "Abdominal Canivete", "estilo": "Flexão", "tipo": "composto", "dificuldade": ["Intermediario", "Avancado", "Em Casa"], "sugerirRepeticoes": { "Em Casa": "3x15", "Iniciante": "Não recomendado", "Intermediario": "4x15-20", "Avancado": "5x20-25" }, "descricao": "Deitado, eleve pernas e tronco simultaneamente, tocando os pés." },
+    { "nome": "Mountain climbers", "grupoMuscular": "Core", "grupoExercicio": "Mountain climbers", "estilo": "Cardio", "tipo": "composto", "dificuldade": ["Iniciante", "Intermediario", "Avancado", "Em Casa"], "sugerirRepeticoes": { "Em Casa": "3x45s", "Iniciante": "3x30s", "Intermediario": "4x45s", "Avancado": "5x60s" }, "descricao": "Em posição de prancha, alterne os joelhos em direção ao peito, simulando uma corrida na montanha." },
+    { "nome": "Abdominal oblíquo (torção lateral)", "grupoMuscular": "Core", "grupoExercicio": "Abdominal Oblíquo", "estilo": "Rotação", "tipo": "isolador", "dificuldade": ["Iniciante", "Intermediario", "Avancado", "Em Casa"], "sugerirRepeticoes": { "Em Casa": "3x20", "Iniciante": "3x15", "Intermediario": "4x20", "Avancado": "5x25" }, "descricao": "Deitado, torça o tronco lateralmente, contraindo oblíquos." },
+    { "nome": "Bicicleta no solo", "grupoMuscular": "Core", "grupoExercicio": "Bicicleta", "estilo": "Flexão", "tipo": "composto", "dificuldade": ["Iniciante", "Intermediario", "Avancado", "Em Casa"], "sugerirRepeticoes": { "Em Casa": "3x30", "Iniciante": "3x20", "Intermediario": "4x30", "Avancado": "5x40" }, "descricao": "Deitado, simule pedalada com pernas e toque cotovelo no joelho oposto." },
+    { "nome": "Prancha", "grupoMuscular": "Core", "grupoExercicio": "Prancha", "estilo": "Isometria", "tipo": "composto", "dificuldade": ["Iniciante", "Intermediario", "Avancado", "Em Casa"], "sugerirRepeticoes": { "Em Casa": "3x45s", "Iniciante": "3x20s", "Intermediario": "4x30-45s", "Avancado": "5x60s" }, "descricao": "Sustente o corpo reto apoiado em antebraços e pés." },
+    { "nome": "Prancha lateral", "grupoMuscular": "Core", "grupoExercicio": "Prancha", "estilo": "Isometria", "tipo": "composto", "dificuldade": ["Iniciante", "Intermediario", "Avancado", "Em Casa"], "sugerirRepeticoes": { "Em Casa": "3x30s", "Iniciante": "3x15-20s", "Intermediario": "4x30s", "Avancado": "5x45-60s" }, "descricao": "Apoie um antebraço e lateral do pé, mantendo o corpo reto." },
+    { "nome": "Abdominal com roda (ab wheel)", "grupoMuscular": "Core", "grupoExercicio": "Ab Wheel", "estilo": "Flexão", "tipo": "composto", "dificuldade": ["Intermediario", "Avançado"], "sugerirRepeticoes": { "Iniciante": "Não recomendado", "Intermediario": "4x10-15", "Avancado": "5x15-20" }, "descricao": "De joelhos, role a roda para frente e volte controlado." },
+    { "nome": "Abdominal com halter no peito", "grupoMuscular": "Core", "grupoExercicio": "Abdominal Crunch", "estilo": "Flexão", "tipo": "composto", "dificuldade": ["Intermediario", "Avançado"], "sugerirRepeticoes": { "Iniciante": "Não recomendado", "Intermediario": "4x15-20", "Avancado": "5x20-25" }, "descricao": "Deitado, segure halter no peito e eleve o tronco." },
+    { "nome": "Abdominal na polia alta (cabo crunch)", "grupoMuscular": "Core", "grupoExercicio": "Abdominal Polia", "estilo": "Flexão", "tipo": "composto", "dificuldade": ["Intermediario", "Avançado"], "sugerirRepeticoes": { "Iniciante": "Não recomendado", "Intermediario": "4x15-20", "Avancado": "5x20-25" }, "descricao": "Ajoelhado, puxe a corda da polia flexionando o tronco." },
+    { "nome": "Elevação de pernas na barra fixa", "grupoMuscular": "Core", "grupoExercicio": "Elevação de Pernas", "estilo": "Flexão", "tipo": "composto", "dificuldade": ["Intermediario", "Avançado"], "sugerirRepeticoes": { "Iniciante": "Não recomendado", "Intermediario": "4x10-15", "Avancado": "5x15-20" }, "descricao": "Pendure-se na barra e eleve as pernas retas." }
+];
 
-        const isAlreadyAdded = day.exercises.some(ex => ex.nome.replace(/\s\(Conjugado com.*?\)/, '') === exerciseToAdd.nome);
-        if (isAlreadyAdded) {
-            showModal("Este exercício já foi adicionado a este dia.");
-            return;
-        }
+        const DICAS_GERAIS = [
+            { titulo: "1. Alimentação e Hidratação", texto: "Consuma proteínas suficientes para a recuperação muscular e carboidratos para energia. Beba bastante água antes, durante e após o treino." },
+            { titulo: "2. Descanso e Recuperação", texto: "Dormir de 7 a 9 horas por noite é crucial para a recuperação muscular e produção hormonal. O crescimento acontece durante o descanso, não apenas no treino." },
+            { titulo: "3. Progressão de Carga", texto: "Aumente a carga ou o número de repetições gradualmente. O progresso contínuo é a chave para o seu desenvolvimento." },
+            { titulo: "4. Execução e Conexão Mente-Músculo", texto: "Priorize a técnica perfeita em cada exercício. Sinta o músculo alvo contraindo e alongando para maximizar o estímulo." }
+        ];
 
-        const nivel = document.getElementById('nivel').value;
-        const objetivo = document.getElementById('objetivo').value;
-
-        const newExerciseEntry = {
-            nome: exerciseToAdd.nome,
-            equipamento: Array.isArray(exerciseToAdd.equipamento) ? exerciseToAdd.equipamento.join(', ') : exerciseToAdd.equipamento,
-            series: parseInt(getSeriesRepeticoes(objetivo, nivel).split('x')[0]),
-            reps: getSeriesRepeticoes(objetivo, nivel).split('x')[1],
-            descanso: parseInt(getDescanso(objetivo).replace(' segundos', '')),
-            tecnica: '',
-            pairedExercise: null
+        const DICAS_POR_OBJETIVO = {
+            "Hipertrofia": [
+                { titulo: "Foco na Hipertrofia", texto: "Para ganhar massa muscular, priorize a carga. Trabalhe com pesos que permitam 8 a 12 repetições até a falha muscular, mantendo a forma correta." },
+                { titulo: "Nutrição na Hipertrofia", texto: "A dieta é fundamental. Garanta um superávit calórico (consumir mais calorias do que gasta) e uma ingestão proteica elevada para sustentar o crescimento muscular." }
+            ],
+            "Emagrecimento": [
+                { titulo: "Foco no Emagrecimento", texto: "Para perder peso, combine treinos de força com cardio. Aumente o volume de treino e a intensidade, e considere técnicas que elevam a frequência cardíaca, como supersets." },
+                { titulo: "Nutrição no Emagrecimento", texto: "O déficit calórico é essencial. Consuma menos calorias do que gasta, mas sem comprometer a ingestão de proteínas e nutrientes essenciais." }
+            ],
+            "Condicionamento Físico Geral": [
+                { titulo: "Foco no Condicionamento", texto: "Varie os estímulos. Alterne entre exercícios de força, resistência e cardio para desenvolver um corpo equilibrado e funcional." },
+                { titulo: "Consistência é Chave", texto: "Mantenha a regularidade. Mesmo treinos mais curtos e menos intensos, se feitos consistentemente, trarão resultados duradouros." }
+            ],
+            "Em Casa": [
+                { titulo: "Aproveite o peso do corpo", texto: "Ajuste o número de repetições ou a velocidade de execução (tempo sob tensão) para aumentar a intensidade. Use objetos de casa como carga." },
+                { titulo: "Criatividade com o espaço", texto: "Seja criativo! Use cadeiras, toalhas, elásticos ou uma mochila com livros para simular diferentes equipamentos e variar os exercícios." }
+            ]
         };
 
-        day.exercises.push(newExerciseEntry);
-        displayGeneratedTrainingPlan();
-        saveUserData();
-        showModal("Exercício adicionado com sucesso!", 'genericModal');
-        closeModal('addExerciseToDayModal');
-    }
+        const DESCRICOES_TECNICAS = {
+            "Drop set": "Após a falha muscular em uma série, reduza imediatamente a carga e continue o exercício até a nova falha. Pode ser feito várias vezes.",
+            "Rest-pause": "Faça uma série até a falha, descanse por um curto período (10-20 segundos), e continue com mais algumas repetições até a falha novamente. Repita 2-3 vezes.",
+            "Superset": "Execute dois exercícios consecutivos para o mesmo grupo muscular (biset) ou para grupos musculares opostos (agonista-antagonista) sem descanso entre eles. EX: Supino Reto + Crucifixo Reto.",
+            "Pré-Exaustão": "Realize um exercício isolador para o grupo muscular alvo até a falha, seguido imediatamente por um exercício composto que trabalhe o mesmo grupo. EX: Crucifixo Reto (isolador) + Supino Reto (composto).",
+            "Pirâmide crescente": "Comece com mais repetições e menos peso, e em cada série subsequente, aumente o peso e diminua as repetições.",
+            "Pirâmide decrescente": "Comece com menos repetições e mais peso, e em cada série subsequente, diminua o peso e aumente as repetições."
+        };
+        
+        const TECNICAS_DISPONIVEIS = [
+            "Superset", "Drop set", "Rest-pause", "Pré-Exaustão", "Pirâmide crescente", "Pirâmide decrescente"
+        ];
+
+        const LIMITES_TREINO_TOTAL = {
+            "Em Casa": { min: 4, max: 7 }, // Limites para o novo modo
+            "Iniciante": { min: 4, max: 6 },
+            "Intermediario": { min: 6, max: 7 },
+            "Avancado": { min: 7, max: 8 }
+        };
+
+        const PESOS_GRUPOS = {
+            1: 1.0, // Primeiro grupo principal
+            2: 0.8, // Segundo grupo
+            3: 0.5  // Terceiro e demais grupos
+        };
+
+        const GRUPOS_MUSCULARES_GRANDES = ["Peito", "Costas", "Quadríceps", "Glúteo", "Ombro"];
+
+        const LIMITES_ACESSORIOS = { // Máximo de exercícios para grupos musculares "acessórios"
+            "Panturrilha": 2,
+            "Trapézio": 2,
+            "Antebraço": 1,
+            "Core": 2
+        };
+
+        const GRUPOS_ANISTAS_ANTAGONISTAS = {
+            "Peito": "Costas",
+            "Costas": "Peito",
+            "Bíceps": "Tríceps",
+            "Tríceps": "Bíceps",
+            "Quadríceps": "Posterior de Coxa",
+            "Posterior de Coxa": "Quadríceps"
+        };
+        
+        const ESTILOS_COMPATIVEIS_SUPERSET = {
+            "Press": ["Isolador", "Press"],
+            "Puxada Vertical": ["Puxada Horizontal", "Isolador"],
+            "Puxada Horizontal": ["Puxada Vertical", "Isolador"],
+            "Agachamento": ["Isolador", "Lunge"],
+            "Extensão": ["Isolador", "Agachamento"],
+            "Abdução": ["Isolador"],
+            "Flexão": ["Isolador", "Flexão"],
+            "Rosca": ["Isolador", "Flexão"],
+            "Isolador": ["Isolador", "Composto"]
+        };
 
 
-    // --- Custom Day Management ---
-    let dayCounter = 0;
-    const allMuscleGroups = ["Peito", "Costas", "Pernas", "Glúteos", "Ombros", "Bíceps", "Tríceps", "Abdômen", "Panturrilhas", "Antebraço", "Trapézio", "Lombar", "Posterior Coxa", "Quadríceps", "Adutores", "Core"];
+        let gruposDisponiveis = [...new Set(EXERCICIOS.map(ex => ex.grupoMuscular))].sort();
+        let diaTreinoCount = 0;
+        let treinoSemanalGerado = [];
+        let modalDiaIndex = null;
 
-    function getDayLetter(num) {
-        const letters = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z'];
-        return letters[num % letters.length];
-    }
-
-    function addCustomDay(dayLabelFromLoad = null, selectedGroupsFromLoad = []) {
-        const container = document.getElementById('customDaysContainer');
-        const dayIndex = dayCounter++;
-
-        const diaLetra = dayLabelFromLoad || getDayLetter(dayIndex);
-
-        const dayDiv = document.createElement('div');
-        dayDiv.className = 'custom-day-entry bg-gray-700 p-4 rounded-lg mb-3';
-        dayDiv.setAttribute('data-day-label', diaLetra); 
-
-        let checkboxesHtml = allMuscleGroups.map(group => `
-            <div class="flex items-center">
-                <input type="checkbox" id="day-${diaLetra}-${group}-${dayIndex}" value="${group}" class="form-checkbox h-5 w-5 text-orange-600" ${selectedGroupsFromLoad.includes(group) ? 'checked' : ''}>
-                <label for="day-${diaLetra}-${group}-${dayIndex}" class="ml-2 text-base">${group}</label>
-            </div>
-        `).join('');
-
-        dayDiv.innerHTML = `
-            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-3">
-                <label class="text-lg font-bold">Dia <span class="day-label">${diaLetra}</span>: Grupos Musculares</label>
-                <button type="button" class="remove-day-btn bg-red-600 hover:bg-red-700 text-white py-1 px-3 rounded-md text-sm mt-2 sm:mt-0" onclick="removeCustomDay(this, '${diaLetra}')">Remover Dia</button>
-            </div>
-            <div class="flex flex-wrap gap-4">
-                ${checkboxesHtml}
-            </div>
-        `;
-        container.appendChild(dayDiv);
-    }
-
-    function removeCustomDay(button, dayLabelToRemove) {
-        const dayDiv = button.closest('.custom-day-entry');
-        if (dayDiv) {
-            dayDiv.remove();
-            generatedTrainingPlan = generatedTrainingPlan.filter(day => day.dayLabel !== dayLabelToRemove);
-            displayGeneratedTrainingPlan(); 
-            saveUserData();
-        }
-    }
-
-    function getWarmup(muscleGroups) {
-        const generalWarmup = [...aquecimentos.Geral];
-        const specificWarmup = new Set();
-
-        muscleGroups.forEach(group => {
-            if (aquecimentos[group]) {
-                aquecimentos[group].forEach(item => specificWarmup.add(item));
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
             }
-        });
-        return [...generalWarmup, ...Array.from(specificWarmup)];
-    }
-
-    function shuffleArray(array) {
-        for (let i = array.length - 1; i > 0; i--) {
-            const j = Math.floor(Math.random() * (i + 1));
-            [array[i], array[j]] = [array[j], array[i]];
         }
-        return array;
-    }
+        
+        function sortGruposMuscularesParaSelecao(gruposSelecionados) {
+            const gruposSemCore = gruposSelecionados.filter(g => g !== "Core");
+            const corePresente = gruposSelecionados.includes("Core");
 
-    function gerarTreino() {
-        const nomeAluno = document.getElementById('nomeAluno').value;
-        const idade = document.getElementById('idade').value;
-        const peso = document.getElementById('peso').value;
-        const altura = document.getElementById('altura').value;
-        const sexo = document.getElementById('sexo').value;
-        const nivel = document.getElementById('nivel').value;
-        const objetivo = document.getElementById('objetivo').value;
-        const observacoes = document.getElementById('observacoes').value;
+            const sortedGrupos = gruposSemCore.sort((a, b) => {
+                const aGrande = GRUPOS_MUSCULARES_GRANDES.includes(a);
+                const bGrande = GRUPOS_MUSCULARES_GRANDES.includes(b);
 
-        const equipamentosSelecionados = Array.from(document.querySelectorAll('#equipamentos input[type="checkbox"]:checked'))
-                                            .map(cb => cb.value);
+                if (aGrande && !bGrande) return -1;
+                if (!aGrande && bGrande) return 1;
+                return 0;
+            });
 
-        const tecnicasSelecionadas = Array.from(document.querySelectorAll('#tecnicas input[type="checkbox"]:checked'))
-                                         .map(cb => cb.value);
-
-        if (!nomeAluno || !idade || !peso || !altura || !sexo || !nivel || !objetivo) {
-            showModal("Por favor, preencha todos os campos obrigatórios.");
-            return;
-        }
-        if (equipamentosSelecionados.length === 0) {
-            showModal("Por favor, selecione pelo menos um equipamento disponível.");
-            return;
-        }
-        if (exerciciosDB.length === 0) {
-            showModal("A lista de exercícios não foi carregada. Verifique sua conexão ou a configuração do Firebase Firestore.");
-            return;
-        }
-
-
-        const customDivisionsData = [];
-        let hasSelectedGroups = false;
-        document.querySelectorAll('.custom-day-entry').forEach(dayDiv => {
-            const dayLabel = dayDiv.getAttribute('data-day-label');
-            const selectedGroups = Array.from(dayDiv.querySelectorAll('input[type="checkbox"]:checked'))
-                                        .map(cb => cb.value);
-            if (selectedGroups.length > 0) {
-                hasSelectedGroups = true;
+            if (corePresente) {
+                sortedGrupos.push("Core");
             }
-            customDivisionsData.push({ dayLabel, selectedGroups });
-        });
-
-        if (!hasSelectedGroups) {
-            showModal("Por favor, selecione os grupos musculares para pelo menos um dia de treino.");
-            return;
+            return sortedGrupos;
         }
 
-        generatedTrainingPlan = [];
+        function adicionarDiaTreino() {
+            diaTreinoCount++;
+            const diasDeTreinoContainer = document.getElementById('diasDeTreino');
+            const diaTreinoDiv = document.createElement('div');
+            diaTreinoDiv.classList.add('treino-dia');
+            
+            // Reordena a lista de grupos musculares em ordem alfabética
+            const gruposMuscularesOrdenados = gruposDisponiveis.sort();
 
-        const maxTecnicasPorDia = 2;
+            const gruposParaCheckboxes = gruposMuscularesOrdenados.map(grupo => `
+                <div class="checkbox-item">
+                    <input type="checkbox" id="grupo_dia_${diaTreinoCount}_${grupo}" name="grupos_dia_${diaTreinoCount}" value="${grupo}">
+                    <label for="grupo_dia_${diaTreinoCount}_${grupo}">${grupo}</label>
+                </div>
+            `).join('');
+            
+            const tecnicasParaCheckboxes = TECNICAS_DISPONIVEIS.map(tecnica => `
+                <div class="checkbox-item">
+                    <input type="checkbox" id="tecnica_dia_${diaTreinoCount}_${tecnica.replace(/\s/g, '_')}" name="tecnicas_dia_${diaTreinoCount}" value="${tecnica}">
+                    <label for="tecnica_dia_${diaTreinoCount}_${tecnica.replace(/\s/g, '_')}">${tecnica}</label>
+                </div>
+            `).join('');
 
-        customDivisionsData.forEach(dia => {
-            const diaLetra = dia.dayLabel;
-            const gruposDoDia = dia.selectedGroups;
-            let tecnicasAplicadasNesteDia = 0;
-            const exerciciosJaUsadosNoDia = new Set();
+            diaTreinoDiv.innerHTML = `
+                <h3>Treino Dia ${String.fromCharCode(64 + diaTreinoCount)}</h3>
+                <span class="remover" onclick="this.parentNode.remove()">x Remover</span>
+                <label for="nome_dia_${diaTreinoCount}">Nome do Treino (opcional):</label>
+                <input type="text" id="nome_dia_${diaTreinoCount}" name="nome_dia_${diaTreinoCount}" placeholder="Ex: Treino A">
+                <label>Grupos Musculares (selecione em ordem de prioridade):</label>
+                <div class="checkbox-group">
+                    ${gruposParaCheckboxes}
+                </div>
+                <div style="margin-top: 20px;">
+                    <label>Técnicas Avançadas (selecione as desejadas, máx. 2):</label>
+                    <div class="tecnicas-group">
+                        ${tecnicasParaCheckboxes}
+                    </div>
+                </div>
+            `;
+            diasDeTreinoContainer.appendChild(diaTreinoDiv);
+        }
+        
+        function getExerciciosParaGrupo(grupo, dificuldade, sexo) {
+            // Filtra exercícios que incluem a dificuldade ou a nova modalidade
+            return EXERCICIOS.filter(ex => 
+                ex.grupoMuscular === grupo && 
+                ex.dificuldade.includes(dificuldade) &&
+                (!ex.sexoExclusivo || ex.sexoExclusivo === sexo)
+            );
+        }
+        
+        function gerarTreinoAutomatico(dificuldade, grupos_musculares_selecionados, tecnicasSelecionadas, sexo) {
+            let exerciciosSelecionados = [];
+            const limitesNivel = LIMITES_TREINO_TOTAL[dificuldade];
+            
+            let grupos_principais_sem_core = grupos_musculares_selecionados.filter(g => g !== "Core");
+            const core_selecionado = grupos_musculares_selecionados.includes("Core");
 
-            const currentDayExercises = [];
+            let grupos_musculares_ordenados = sortGruposMuscularesParaSelecao(grupos_principais_sem_core);
+            
+            let numTotalExercicios = Math.min(Math.max(grupos_musculares_ordenados.length * 2, limitesNivel.min), limitesNivel.max);
+            
+            const pesosAtivos = grupos_musculares_ordenados.map((_, index) => PESOS_GRUPOS[Math.min(index + 1, 3)] || PESOS_GRUPOS[3]);
+            const somaPesos = pesosAtivos.reduce((a, b) => a + b, 0);
 
-            if (gruposDoDia.length === 0) {
-                 generatedTrainingPlan.push({
-                    dayLabel: diaLetra,
-                    muscleGroups: gruposDoDia,
-                    exercises: [],
-                    cardio: null,
-                });
-                return;
+            const numExerciciosPorGrupo = {};
+            grupos_musculares_ordenados.forEach((grupo, index) => {
+                let num = Math.round((pesosAtivos[index] / somaPesos) * numTotalExercicios);
+                numExerciciosPorGrupo[grupo] = num > 0 ? num : 1;
+            });
+            
+            grupos_musculares_ordenados.forEach(grupo => {
+                if (LIMITES_ACESSORIOS[grupo] && grupo !== "Core") {
+                    numExerciciosPorGrupo[grupo] = Math.min(numExerciciosPorGrupo[grupo], LIMITES_ACESSORIOS[grupo]);
+                }
+            });
+
+            let somaAtual = Object.values(numExerciciosPorGrupo).reduce((a, b) => a + b, 0);
+            while (somaAtual > numTotalExercicios) {
+                const grupoMaior = Object.keys(numExerciciosPorGrupo).reduce((a, b) => numExerciciosPorGrupo[a] > numExerciciosPorGrupo[b] ? a : b);
+                if (numExerciciosPorGrupo[grupoMaior] > 1 && !LIMITES_ACESSORIOS[grupoMaior]) {
+                    numExerciciosPorGrupo[grupoMaior]--;
+                    somaAtual--;
+                } else {
+                    break;
+                }
             }
-
-            gruposDoDia.forEach(grupo => {
-                const grupoPrimario = grupo;
-                
-                const exerciciosDisponiveis = exerciciosDB.filter(ex =>
-                    ex.grupoPrimario === grupoPrimario &&
-                    (nivel === "Avancado" || ex.difficulty === "Iniciante" || ex.difficulty === "Intermediario") &&
-                    (nivel === "Intermediario" ? ex.difficulty !== "Avancado" : true) &&
-                    equipamentosSelecionados.some(eq => Array.isArray(ex.equipamento) ? eq.includes(eq) : ex.equipamento === eq)
-                );
-
-                let numExerciciosPorGrupo;
-                if (nivel === "Iniciante") numExerciciosPorGrupo = 2;
-                else if (nivel === "Intermediario") numExerciciosPorGrupo = 3;
-                else numExerciciosPorGrupo = 3;
-
-                let shuffledExercicios = shuffleArray([...exerciciosDisponiveis]);
-                let exercisesAddedForGroup = 0;
-
-                for (let i = 0; i < shuffledExercicios.length && exercisesAddedForGroup < numExerciciosPorGrupo; i++) {
-                    const exercicio = shuffledExercicios[i];
-                    if (exerciciosJaUsadosNoDia.has(exercicio.nome)) {
-                        continue;
-                    }
-                    
-                    exerciciosJaUsadosNoDia.add(exercicio.nome);
-                    exercisesAddedForGroup++;
-
-                    const execucaoText = getSeriesRepeticoes(objetivo, nivel);
-                    let tecnicaAplicada = '';
-                    let pairedExerciseObj = null;
-
-                    const applicableTechniques = tecnicasSelecionadas.filter(tech =>
-                        (nivel === "Avancado" && ["Drop Set", "Bi-set", "Superset", "FST-7", "Rest-Pause"].includes(tech)) ||
-                        (nivel === "Intermediario" && ["Bi-set", "Superset"].includes(tech) && Math.random() < 0.5)
-                    );
-
-                    let chanceTecnica;
-                    if (nivel === "Avancado") {
-                        chanceTecnica = 0.6;
-                    } else if (nivel === "Intermediario") {
-                        chanceTecnica = 0.3;
+            while (somaAtual < numTotalExercicios) {
+                const grupoMenor = Object.keys(numExerciciosPorGrupo).reduce((a, b) => numExerciciosPorGrupo[a] < numExerciciosPorGrupo[b] ? a : b);
+                if (!LIMITES_ACESSORIOS[grupoMenor] || numExerciciosPorGrupo[grupoMenor] < LIMITES_ACESSORIOS[grupoMenor]) {
+                    numExerciciosPorGrupo[grupoMenor]++;
+                    somaAtual++;
+                } else {
+                    const gruposParaAumentar = grupos_musculares_ordenados.filter(g => !LIMITES_ACESSORIOS[g] || numExerciciosPorGrupo[g] < LIMITES_ACESSORIOS[g]);
+                    if (gruposParaAumentar.length > 0) {
+                        numExerciciosPorGrupo[gruposParaAumentar[Math.floor(Math.random() * gruposParaAumentar.length)]]++;
+                        somaAtual++;
                     } else {
-                        chanceTecnica = 0.05;
+                        break;
                     }
-                    
-                    if (applicableTechniques.length > 0 && tecnicasAplicadasNesteDia < maxTecnicasPorDia) {
-                        const potentialTechniques = shuffleArray([...applicableTechniques]);
-                        for (const tech of potentialTechniques) {
-                            if (tech === 'Bi-set' || tech === 'Superset') {
-                                const potentialPairedExercises = exerciciosDB.filter(
-                                    ex => ex.nome !== exercicio.nome && !exerciciosJaUsadosNoDia.has(ex.nome) && ex.grupoPrimario === exercicio.grupoPrimario && ex.difficulty === exercicio.difficulty && equipamentosSelecionados.some(eq => Array.isArray(ex.equipamento) ? eq.includes(eq) : ex.equipamento === eq)
-                                );
+                }
+            }
 
-                                if (potentialPairedExercises.length > 0) {
-                                    pairedExerciseObj = potentialPairedExercises[Math.floor(Math.random() * potentialPairedExercises.length)];
-                                    tecnicaAplicada = tech;
-                                    tecnicasAplicadasNesteDia++;
-                                    exerciciosJaUsadosNoDia.add(pairedExerciseObj.nome);
-                                    break;
-                                }
-                            } else {
-                                tecnicaAplicada = tech;
-                                tecnicasAplicadasNesteDia++;
+            let gruposDeExerciciosUsados = new Set();
+            for (const grupo of grupos_musculares_ordenados) {
+                const numParaAdicionar = numExerciciosPorGrupo[grupo];
+                let exerciciosDoGrupo = getExerciciosParaGrupo(grupo, dificuldade, sexo);
+                
+                let exerciciosDisponiveis = exerciciosDoGrupo.filter(ex => 
+                    !exerciciosSelecionados.some(selectedEx => selectedEx.nome === ex.nome) &&
+                    (!ex.grupoExercicio || !gruposDeExerciciosUsados.has(ex.grupoExercicio))
+                );
+                
+                shuffleArray(exerciciosDisponiveis);
+                
+                let subGruposUsados = new Set();
+                let estilosUsados = new Set();
+                let tempExerciciosAdicionados = [];
+
+                for (const exercicio of exerciciosDisponiveis) {
+                    const hasSubGroup = exercicio.subGrupo;
+                    const hasEstilo = exercicio.estilo;
+
+                    const isSubGroupNovel = hasSubGroup ? !subGruposUsados.has(exercicio.subGroup) : true;
+                    const isEstiloNovel = hasEstilo ? !estilosUsados.has(exercicio.estilo) : true;
+                    
+                    const isGrupoExercicioNovel = exercicio.grupoExercicio ? !gruposDeExerciciosUsados.has(exercicio.grupoExercicio) : true;
+
+                    if (tempExerciciosAdicionados.length < numParaAdicionar && isSubGroupNovel && isEstiloNovel && isGrupoExercicioNovel) {
+                        tempExerciciosAdicionados.push(exercicio);
+                        if (hasSubGroup) subGruposUsados.add(exercicio.subGroup);
+                        if (hasEstilo) estilosUsados.add(exercicio.estilo);
+                        if (exercicio.grupoExercicio) gruposDeExerciciosUsados.add(exercicio.grupoExercicio);
+                    }
+                }
+
+                let restantes = exerciciosDisponiveis.filter(ex => 
+                    !tempExerciciosAdicionados.some(tempEx => tempEx.nome === ex.nome)
+                );
+                shuffleArray(restantes);
+                while (tempExerciciosAdicionados.length < numParaAdicionar && restantes.length > 0) {
+                    const ex = restantes.shift();
+                    if (!ex.grupoExercicio || !gruposDeExerciciosUsados.has(ex.grupoExercicio)) {
+                        tempExerciciosAdicionados.push(ex);
+                        if (ex.grupoExercicio) gruposDeExerciciosUsados.add(ex.grupoExercicio);
+                    }
+                }
+                
+                exerciciosSelecionados = exerciciosSelecionados.concat(tempExerciciosAdicionados);
+            }
+            
+            if (core_selecionado) {
+                const numCore = LIMITES_ACESSORIOS["Core"];
+                let exerciciosCore = getExerciciosParaGrupo("Core", dificuldade, sexo);
+                shuffleArray(exerciciosCore);
+                exerciciosSelecionados = exerciciosSelecionados.concat(exerciciosCore.slice(0, numCore));
+            }
+
+            if (tecnicasSelecionadas && tecnicasSelecionadas.length > 0) {
+                aplicarTecnicasAvancadas(exerciciosSelecionados, dificuldade, tecnicasSelecionadas);
+            }
+
+            const treinoPrincipal = exerciciosSelecionados.filter(ex => ex.grupoMuscular !== "Core");
+            const treinoCore = exerciciosSelecionados.filter(ex => ex.grupoMuscular === "Core");
+
+            treinoPrincipal.sort((a, b) => {
+                return grupos_musculares_ordenados.indexOf(a.grupoMuscular) - grupos_musculares_ordenados.indexOf(b.grupoMuscular);
+            });
+            
+            return treinoPrincipal.concat(treinoCore);
+        }
+
+        function aplicarTecnicasAvancadas(treino, dificuldade, tecnicasDesejadas) {
+            let exerciciosComTecnicas = 0;
+            const MAX_TECNICAS_POR_TREINO = 2;
+            
+            const treinoParaTecnicas = [...treino].filter(ex => ex.grupoMuscular !== "Core" && !ex.tecnica);
+            shuffleArray(treinoParaTecnicas);
+
+            for (const tecnica of tecnicasDesejadas) {
+                if (exerciciosComTecnicas >= MAX_TECNICAS_POR_TREINO) break;
+
+                if (tecnica === "Superset") {
+                    let supersetAplicado = false;
+                    for (let i = 0; i < treinoParaTecnicas.length; i++) {
+                        if (exerciciosComTecnicas >= MAX_TECNICAS_POR_TREINO) break;
+                        const ex1 = treinoParaTecnicas[i];
+                        if (ex1.tecnica) continue;
+
+                        const estiloCompativeis = ESTILOS_COMPATIVEIS_SUPERSET[ex1.estilo];
+                        if (!estiloCompativeis) continue;
+
+                        let ex2 = null;
+
+                        const possiveisEx2MesmoGrupo = EXERCICIOS.filter(e => 
+                            e.grupoMuscular === ex1.grupoMuscular &&
+                            e.dificuldade.includes(dificuldade) &&
+                            e.nome !== ex1.nome &&
+                            !treino.some(t => t.nome === e.nome && t.tecnica) &&
+                            estiloCompativeis.includes(e.estilo)
+                        );
+                        shuffleArray(possiveisEx2MesmoGrupo);
+                        if (possiveisEx2MesmoGrupo.length > 0) {
+                            ex2 = possiveisEx2MesmoGrupo[0];
+                        }
+
+                        if (!ex2 && GRUPOS_ANISTAS_ANTAGONISTAS[ex1.grupoMuscular]) {
+                            const grupoAntagonista = GRUPOS_ANISTAS_ANTAGONISTAS[ex1.grupoMuscular];
+                            const possiveisEx2Antagonista = EXERCICIOS.filter(e =>
+                                e.grupoMuscular === grupoAntagonista &&
+                                e.dificuldade.includes(dificuldade) &&
+                                !treino.some(t => t.nome === e.nome && t.tecnica) &&
+                                estiloCompativeis.includes(e.estilo)
+                            );
+                            shuffleArray(possiveisEx2Antagonista);
+                            if (possiveisEx2Antagonista.length > 0) {
+                                ex2 = possiveisEx2Antagonista[0];
+                            }
+                        }
+
+                        if (ex2) {
+                            const indexEx1 = treino.findIndex(e => e.nome === ex1.nome);
+                            if (indexEx1 !== -1) {
+                                treino[indexEx1].tecnica = "Superset";
+                                treino[indexEx1].supersetCom = {
+                                    nome: ex2.nome,
+                                    grupoMuscular: ex2.grupoMuscular,
+                                    sugerirRepeticoes: ex2.sugerirRepeticoes[dificuldade] || 'N/A'
+                                };
+                                exerciciosComTecnicas++;
+                                supersetAplicado = true;
                                 break;
                             }
                         }
                     }
+                    if (supersetAplicado) continue;
+                } 
+                else if (tecnica === "Pré-Exaustão") {
+                    let preExaustaoAplicada = false;
+                    for (let i = 0; i < treinoParaTecnicas.length; i++) {
+                        if (exerciciosComTecnicas >= MAX_TECNICAS_POR_TREINO) break;
 
-                    currentDayExercises.push({
-                        nome: exercicio.nome,
-                        equipamento: Array.isArray(exercicio.equipamento) ? exercicio.equipamento.join(', ') : exercicio.equipamento,
-                        series: parseInt(execucaoText.split('x')[0]),
-                        reps: execucaoText.split('x')[1],
-                        descanso: parseInt(getDescanso(objetivo).replace(' segundos', '')),
-                        tecnica: tecnicaAplicada || '',
-                        pairedExercise: pairedExerciseObj ? { nome: pairedExerciseObj.nome } : null
-                    });
+                        const isolador = treinoParaTecnicas[i];
+                        if (isolador.tecnica || isolador.tipo !== "isolador" || isolador.grupoMuscular === "Core") continue;
 
-                    if (pairedExerciseObj) {
-                        currentDayExercises.push({
-                            nome: `${pairedExerciseObj.nome} (Conjugado com ${exercicio.nome})`,
-                            equipamento: Array.isArray(pairedExerciseObj.equipamento) ? pairedExerciseObj.equipamento.join(', ') : pairedExerciseObj.equipamento,
-                            series: parseInt(execucaoText.split('x')[0]),
-                            reps: execucaoText.split('x')[1],
-                            descanso: parseInt(getDescanso(objetivo).replace(' segundos', '')),
-                            tecnica: tecnicaAplicada,
-                            pairedExercise: { nome: exercicio.nome }
-                        });
-                        exercisesAddedForGroup++; 
+                        const composto = EXERCICIOS.find(e => 
+                            e.grupoMuscular === isolador.grupoMuscular &&
+                            e.tipo === "composto" &&
+                            e.dificuldade.includes(dificuldade) &&
+                            !treino.some(t => t.nome === e.nome && t.tecnica)
+                        );
+
+                        if (composto) {
+                            const indexIsolador = treino.findIndex(e => e.nome === isolador.nome);
+                            const indexComposto = treino.findIndex(e => e.nome === composto.nome);
+
+                            if (indexIsolador !== -1 && indexComposto === -1) {
+                                treino[indexIsolador].tecnica = "Pré-Exaustão";
+                                treino[indexIsolador].preExaustaoCom = {
+                                    nome: composto.nome,
+                                    grupoMuscular: composto.grupoMuscular,
+                                    sugerirRepeticoes: composto.sugerirRepeticoes[dificuldade] || 'N/A'
+                                };
+                                treino.splice(indexIsolador + 1, 0, composto); 
+                                exerciciosComTecnicas++;
+                                preExaustaoAplicada = true;
+                                break;
+                            }
+                        }
                     }
+                    if (preExaustaoAplicada) continue;
                 }
-            });
+                else {
+                    for (let i = 0; i < treinoParaTecnicas.length; i++) {
+                        if (exerciciosComTecnicas >= MAX_TECNICAS_POR_TREINO) break;
 
-            let cardioText = null;
-            if (objetivo === "Emagrecimento" || Math.random() > 0.4) {
-                const availableCardio = cardioExercises[nivel];
-                if (availableCardio && availableCardio.length > 0) {
-                    const cardioEscolhido = availableCardio[Math.floor(Math.random() * availableCardio.length)];
-                    cardioText = cardioEscolhido.nome;
-                    if (objetivo === "Emagrecimento") {
-                        cardioText += " - Mantenha a intensidade para maximizar a queima de gordura!";
+                        const ex = treinoParaTecnicas[i];
+                        if (ex.tecnica || ex.grupoMuscular === "Core") continue; 
+
+                        const indexEx = treino.findIndex(e => e.nome === ex.nome);
+                        if (indexEx !== -1) {
+                            treino[indexEx].tecnica = tecnica;
+                            exerciciosComTecnicas++;
+                            break;
+                        }
                     }
-                } else {
-                    cardioText = "Não foi possível gerar um exercício de cardio para este nível.";
                 }
             }
-
-            generatedTrainingPlan.push({
-                dayLabel: diaLetra,
-                muscleGroups: gruposDoDia,
-                exercises: currentDayExercises,
-                cardio: cardioText,
-            });
-        });
-
-        displayGeneratedTrainingPlan();
-        saveUserData();
-    }
-
-    function cleanTextForPdf(text) {
-        if (!text) return '';
-        const cleaned = text
-            .replace(/[\u{1F600}-\u{1F64F}\u{1F300}-\u{1F5FF}\u{1F680}-\u{1F6FF}\u{1F1E0}-\u{1F1FF}]/gu, '')
-            .replace(/<[^>]*>?/gm, '')
-            .trim();
-        return cleaned;
-    }
-
-    function exportarTreinoParaPDF() {
-        if (userNivelAcesso !== 'premium') {
-            showModal("Esta é uma funcionalidade Premium. Por favor, faça o upgrade para poder exportar.");
-            return;
         }
 
-        const { jsPDF } = window.jspdf;
-        const doc = new jsPDF();
 
-        // Title and User Info
-        doc.setFontSize(24);
-        doc.setTextColor(255, 102, 0); // Laranja
-        doc.setFont("helvetica", "bold");
-        doc.text("Gerador de Treino", 105, 20, null, null, "center");
-
-        doc.setFontSize(14);
-        doc.setTextColor(50, 50, 50);
-        doc.setFont("helvetica", "normal");
-        let yPos = 30;
-
-        doc.text(`Aluno: ${treinoGeradoConteudoParaPDF.aluno}`, 105, yPos, null, null, "center");
-        yPos += 7;
-        doc.text(`Objetivo: ${treinoGeradoConteudoParaPDF.objetivo} | Nível: ${treinoGeradoConteudoParaPDF.nivel}`, 105, yPos, null, null, "center");
-        yPos += 7;
-        doc.text(`Idade: ${treinoGeradoConteudoParaPDF.idade} | Peso: ${treinoGeradoConteudoParaPDF.peso}kg | Altura: ${treinoGeradoConteudoParaPDF.altura}cm | Sexo: ${treinoGeradoConteudoParaPDF.sexo}`, 105, yPos, null, null, "center");
-        yPos += 15;
-
-        if (treinoGeradoConteudoParaPDF.tecnicas && treinoGeradoConteudoParaPDF.tecnicas.length > 0) {
-            treinoGeradoConteudoParaPDF.tecnicas.forEach(tecnica => {
-                const explicacao = tecnicasExplanations[tecnica] || `Explicação para ${tecnica} não encontrada.`;
-                doc.setFontSize(10);
-                doc.setTextColor(100, 100, 100);
-                doc.text(`Técnica de Treino: ${tecnica} - ${explicacao}`, 15, yPos);
-                yPos += 5;
-            });
-            yPos += 5;
+        function calcularIMC(peso, altura) {
+            const alturaMetros = altura / 100;
+            const imc = peso / (alturaMetros * alturaMetros);
+            return imc.toFixed(2);
         }
 
-        if (treinoGeradoConteudoParaPDF.observacoes) {
-            doc.setFontSize(10);
-            doc.setTextColor(100, 100, 100);
-            const obsText = `Observações: ${cleanTextForPdf(treinoGeradoConteudoParaPDF.observacoes)}`;
-            const splitObs = doc.splitTextToSize(obsText, 180);
-            doc.text(splitObs, 15, yPos);
-            yPos += (splitObs.length * 5) + 5;
+        function getIMCClassificacao(imc) {
+            if (imc < 18.5) return "Abaixo do peso";
+            if (imc >= 18.5 && imc < 24.9) return "Peso normal";
+            if (imc >= 25 && imc < 29.9) return "Sobrepeso";
+            if (imc >= 30 && imc < 34.9) return "Obesidade Grau I";
+            if (imc >= 35 && imc < 39.9) return "Obesidade Grau II";
+            return "Obesidade Grau III";
         }
         
-        yPos += 5;
-        doc.line(15, yPos, 195, yPos);
-        yPos += 5;
-
-        treinoGeradoConteudoParaPDF.dias.forEach(dia => {
-            if (yPos > 260) {
-                doc.addPage();
-                yPos = 20;
-            }
-
-            doc.setFontSize(16);
-            doc.setTextColor(255, 102, 0);
-            doc.text(`Dia ${dia.dayName}: Treino de ${dia.groups.join(' + ')}`, 15, yPos);
-            yPos += 8;
-
-            doc.setFontSize(12);
-            doc.setTextColor(50, 50, 50);
-            doc.text("Aquecimento:", 15, yPos);
-            yPos += 5;
-            
-            dia.warmup.forEach(item => {
-                doc.setFontSize(10);
-                doc.setTextColor(100, 100, 100);
-                const splitWarmup = doc.splitTextToSize(`• ${item}`, 180);
-                doc.text(splitWarmup, 18, yPos);
-                yPos += splitWarmup.length * 5;
-            });
-            yPos += 5;
-
-            if (dia.exercises && dia.exercises.length > 0) {
-                const headers = [['Exercício', 'Séries/Reps', 'Descanso', 'Técnica']];
-                const data = dia.exercises.map(ex => [
-                    cleanTextForPdf(ex.nome),
-                    cleanTextForPdf(ex.execucao),
-                    cleanTextForPdf(ex.descanso),
-                    cleanTextForPdf(ex.tecnica)
-                ]);
-
-                doc.autoTable({
-                    head: headers,
-                    body: data,
-                    startY: yPos,
-                    theme: 'striped',
-                    styles: {
-                        fontSize: 9,
-                        cellPadding: 2,
-                        textColor: [50, 50, 50],
-                        valign: 'middle'
-                    },
-                    headStyles: {
-                        fillColor: [255, 102, 0], // Laranja
-                        textColor: [255, 255, 255],
-                        fontStyle: 'bold'
-                    },
-                    margin: { top: 5, left: 15, right: 15 },
-                    didDrawPage: function (data) {
-                        yPos = data.cursor.y + 5;
-                    }
-                });
-                yPos = doc.autoTable.previous.finalY + 5;
-            } else {
-                yPos += 5;
-            }
-
-            if (dia.cardio) {
-                doc.setFontSize(12);
-                doc.setTextColor(50, 50, 50);
-                doc.text(`Cardio: ${cleanTextForPdf(dia.cardio)}`, 15, yPos);
-                yPos += 10;
-            } else {
-                doc.setFontSize(12);
-                doc.setTextColor(100, 100, 100);
-                doc.text(`Cardio: Nenhum exercício de cardio para este dia.`, 15, yPos);
-                yPos += 10;
-            }
-            
-            yPos += 5;
-        });
-
-        // Logo image and footer
-        if (YOUR_LOGO_BASE64_STRING_HERE) {
-            doc.addImage(YOUR_LOGO_BASE64_STRING_HERE, 'PNG', 15, doc.internal.pageSize.height - 30, 20, 20);
+        function calcularPesoIdeal(altura) {
+            const alturaMetros = altura / 100;
+            const imcIdeal = 21.7; // Média de um IMC saudável (18.5 a 24.9)
+            const pesoIdeal = imcIdeal * (alturaMetros * alturaMetros);
+            return pesoIdeal.toFixed(2);
         }
 
-        doc.setFontSize(8);
-        doc.setTextColor(150, 150, 150);
-        doc.text("Gerado por Gerador de Treino | www.seusite.com.br", 105, doc.internal.pageSize.height - 10, null, null, "center");
+        function calcularAguaRecomendada(peso) {
+            return (peso * 35).toFixed(0);
+        }
 
-        doc.save(`treino_${treinoGeradoConteudoParaPDF.aluno || 'aluno'}.pdf`);
-    }
+        function calcularTMB(peso, altura, idade, sexo, fator_atividade) {
+            let tmb;
+            if (sexo === "Masculino") {
+                tmb = 10 * peso + 6.25 * altura - 5 * idade + 5;
+            } else {
+                tmb = 10 * peso + 6.25 * altura - 5 * idade - 161;
+            }
+            const consumoCalorico = tmb * fator_atividade;
+            return {
+                tmb: tmb.toFixed(2),
+                consumo: consumoCalorico.toFixed(2)
+            };
+        }
+        
+        // Nova função para gerar dicas personalizadas
+        function gerarDicasPersonalizadas(objetivo) {
+            const dicasPersonalizadas = [...DICAS_GERAIS];
+            if (DICAS_POR_OBJETIVO[objetivo]) {
+                dicasPersonalizadas.push(...DICAS_POR_OBJETIVO[objetivo]);
+            }
+            return dicasPersonalizadas;
+        }
 
-    // A função de onload foi removida e a inicialização de dados foi movida
-    // para a verificação de estado de autenticação para garantir que o Firebase esteja pronto.
+        function gerarPDFFinal() {
+            const nome_aluno = document.getElementById('nome_aluno').value;
+            const dificuldade = document.getElementById('dificuldade').value;
+            const objetivo = document.getElementById('objetivo').value;
+            const incluir_descricao = document.getElementById('incluir_descricao').checked;
+
+            const peso = parseFloat(document.getElementById('peso').value);
+            const altura = parseInt(document.getElementById('altura').value);
+            const idade = parseInt(document.getElementById('idade').value);
+            const sexo = document.getElementById('sexo').value;
+            const fator_atividade = parseFloat(document.getElementById('fator_atividade').value);
+
+            const imc = calcularIMC(peso, altura);
+            const pesoIdeal = calcularPesoIdeal(altura);
+            const aguaRecomendada = calcularAguaRecomendada(peso);
+            const { tmb, consumo } = calcularTMB(peso, altura, idade, sexo, fator_atividade);
+
+            const dadosNutricionais = { imc, tmb, consumo, pesoIdeal, aguaRecomendada };
+            const dadosGerais = { nome_aluno, dificuldade, objetivo };
+
+            // Reconstroi o treino a partir da pré-visualização
+            const treinoSemanalFinal = [];
+            const diasPreview = document.querySelectorAll('.treino-preview-dia');
+            
+            diasPreview.forEach(diaDiv => {
+                const nome_dia = diaDiv.querySelector('h3').textContent;
+                const grupos_musculares = diaDiv.querySelector('p').textContent.replace('Grupos: ', '').split(', ');
+                const exerciciosDoDia = [];
+                const exercicioDivs = diaDiv.querySelectorAll('.treino-item');
+                exercicioDivs.forEach(exDiv => {
+                    const nome = exDiv.querySelector('.exercicio-nome').textContent;
+                    const reps = exDiv.querySelector('.exercicio-reps').value;
+                    const descanso = exDiv.querySelector('.exercicio-descanso').value;
+                    const descricao = exDiv.querySelector('.exercicio-descricao').value;
+                    const grupoMuscular = exDiv.dataset.grupoMuscular;
+
+                    const exercicioAtual = { nome, grupoMuscular, sugerirRepeticoes: {}, descanso, descricao };
+                    exercicioAtual.sugerirRepeticoes[dificuldade] = reps;
+                    
+                    const tecnicaInfo = exDiv.querySelector('.tecnica-info');
+                    if(tecnicaInfo) {
+                        const tecnica = tecnicaInfo.textContent.match(/Técnica: (.+)/)?.[1];
+                        if (tecnica) exercicioAtual.tecnica = tecnica;
+                    }
+
+                    exerciciosDoDia.push(exercicioAtual);
+                });
+                treinoSemanalFinal.push({ nome_dia, grupos_musculares: grupos_musculares, treino: exerciciosDoDia });
+            });
+
+            gerarPdfTreinoSemanal(treinoSemanalFinal, dadosGerais, incluir_descricao, dadosNutricionais);
+        }
+
+        function gerarTreino() {
+            const form = document.getElementById('treinoForm');
+            if (!form.checkValidity()) {
+                form.reportValidity();
+                return;
+            }
+
+            const nome_aluno = document.getElementById('nome_aluno').value;
+            const dificuldade = document.getElementById('dificuldade').value;
+            const objetivo = document.getElementById('objetivo').value;
+            const sexo = document.getElementById('sexo').value;
+            
+            const diasTreino = document.querySelectorAll('.treino-dia');
+            treinoSemanalGerado = [];
+
+            if (diasTreino.length === 0) {
+                alert("Por favor, adicione pelo menos um dia de treino.");
+                return;
+            }
+
+            let formularioValido = true;
+            diasTreino.forEach((dia, index) => {
+                let nomeDia = dia.querySelector('input[name^="nome_dia_"]').value;
+                if (!nomeDia) {
+                    nomeDia = `Treino ${String.fromCharCode(65 + index)}`;
+                }
+
+                const gruposMusculares = Array.from(dia.querySelectorAll('input[name^="grupos_dia_"]:checked'))
+                                                     .map(checkbox => checkbox.value);
+                
+                if (gruposMusculares.length === 0) {
+                    alert(`Por favor, selecione pelo menos um grupo muscular para o treino "${nomeDia}".`);
+                    formularioValido = false;
+                    return;
+                }
+
+                const tecnicasSelecionadas = Array.from(dia.querySelectorAll('input[name^="tecnicas_dia_"]:checked'))
+                                                             .map(checkbox => checkbox.value);
+                
+                if (tecnicasSelecionadas.length > 2) {
+                    alert(`No treino "${nomeDia}", você selecionou ${tecnicasSelecionadas.length} técnicas. Por favor, selecione no máximo 2 técnicas por treino.`);
+                    formularioValido = false;
+                    return;
+                }
+
+                const treinoDoDia = gerarTreinoAutomatico(dificuldade, gruposMusculares, tecnicasSelecionadas, sexo);
+                
+                treinoSemanalGerado.push({
+                    nome_dia: nomeDia,
+                    grupos_musculares: gruposMusculares,
+                    tecnicas_selecionadas: tecnicasSelecionadas,
+                    treino: treinoDoDia
+                });
+            });
+
+            if (!formularioValido) {
+                return;
+            }
+            
+            renderizarPreview(treinoSemanalGerado);
+            document.getElementById('formularioInicial').style.display = 'none';
+            document.getElementById('treinoPreview').style.display = 'block';
+        }
+
+        function renderizarPreview(treinoSemanal) {
+            const container = document.getElementById('treinosPreviewContainer');
+            container.innerHTML = '';
+
+            treinoSemanal.forEach((dia, diaIndex) => {
+                const diaDiv = document.createElement('div');
+                diaDiv.classList.add('treino-dia', 'treino-preview-dia');
+                
+                let gruposFormatados = dia.grupos_musculares.join(', ');
+                if (gruposFormatados.length > 80) { // Limita o tamanho do texto no preview para não quebrar o layout
+                    gruposFormatados = gruposFormatados.substring(0, 80) + '...';
+                }
+
+                diaDiv.innerHTML = `
+                    <h3>${dia.nome_dia}</h3>
+                    <p><strong>Grupos:</strong> ${gruposFormatados}</p>
+                    <div class="treino-container" id="treino-dia-${diaIndex}" ondragover="allowDrop(event)" ondrop="drop(event, ${diaIndex})"></div>
+                `;
+                container.appendChild(diaDiv);
+
+                const treinoContainer = diaDiv.querySelector('.treino-container');
+                dia.treino.forEach((exercicio, exercicioIndex) => {
+                    renderizarExercicio(exercicio, treinoContainer, diaIndex, exercicioIndex);
+                });
+                
+                const addBtn = document.createElement('button');
+                addBtn.className = 'adicionar-exercicio-btn';
+                addBtn.textContent = '+ Adicionar Exercício';
+                addBtn.onclick = () => abrirModalExercicios(diaIndex);
+                treinoContainer.appendChild(addBtn);
+            });
+        }
+        
+        function renderizarExercicio(exercicio, container, diaIndex, exercicioIndex) {
+            const exercicioDiv = document.createElement('div');
+            exercicioDiv.classList.add('treino-item');
+            exercicioDiv.setAttribute('draggable', true);
+            exercicioDiv.dataset.diaIndex = diaIndex;
+            exercicioDiv.dataset.exercicioIndex = exercicioIndex;
+            exercicioDiv.dataset.grupoMuscular = exercicio.grupoMuscular;
+
+            // Adiciona eventos de arrastar e soltar
+            exercicioDiv.ondragstart = (event) => drag(event, diaIndex, exercicioIndex);
+            exercicioDiv.ondragenter = (event) => { event.target.closest('.treino-item')?.classList.add('drag-over'); };
+            exercicioDiv.ondragleave = (event) => { event.target.closest('.treino-item')?.classList.remove('drag-over'); };
+            exercicioDiv.ondragend = (event) => {
+                const items = document.querySelectorAll('.treino-item');
+                items.forEach(item => item.classList.remove('dragging', 'drag-over'));
+            };
+
+            let tecnicasHTML = '';
+            if (exercicio.tecnica) {
+                const descricaoTecnica = DESCRICOES_TECNICAS[exercicio.tecnica] || '';
+                tecnicasHTML = `
+                    <p class="tecnica-info">
+                        Técnica: ${exercicio.tecnica}<br>
+                        <small>${descricaoTecnica}</small>
+                    </p>
+                `;
+            }
+
+            exercicioDiv.innerHTML = `
+                <button class="remover" onclick="removerExercicio(${diaIndex}, ${exercicioIndex})">x</button>
+                <div class="treino-item-header">
+                    <span class="grip-handle"><span></span><span></span><span></span></span>
+                    <h4><span class="exercicio-nome">${exercicio.nome}</span></h4>
+                    <!-- Novos botões de acessibilidade para reordenar -->
+                    <div class="move-buttons">
+                        <button type="button" aria-label="Mover exercício para cima" onclick="moverExercicioParaCima(${diaIndex}, ${exercicioIndex})" ${exercicioIndex === 0 ? 'disabled' : ''}>▲</button>
+                        <button type="button" aria-label="Mover exercício para baixo" onclick="moverExercicioParaBaixo(${diaIndex}, ${exercicioIndex})" ${exercicioIndex === treinoSemanalGerado[diaIndex].treino.length - 1 ? 'disabled' : ''}>▼</button>
+                    </div>
+                </div>
+                <div class="treino-item-body">
+                    <div class="input-group">
+                        <label>Séries/Reps:</label>
+                        <input type="text" class="exercicio-reps" value="${exercicio.sugerirRepeticoes[document.getElementById('dificuldade').value] || 'N/A'}" placeholder="Ex: 3x12">
+                    </div>
+                    <div class="input-group">
+                        <label>Descanso:</label>
+                        <input type="text" class="exercicio-descanso" value="${exercicio.descanso || '60-90s'}" placeholder="Ex: 60-90s">
+                    </div>
+                </div>
+                <div>
+                    <label>Descrição:</label>
+                    <textarea class="exercicio-descricao" placeholder="Descrição opcional">${exercicio.descricao || ''}</textarea>
+                </div>
+                ${tecnicasHTML}
+            `;
+            container.appendChild(exercicioDiv);
+            
+            const nomeSpan = exercicioDiv.querySelector('.exercicio-nome');
+            nomeSpan.onclick = () => {
+                const nomeAtual = nomeSpan.textContent;
+                const input = document.createElement('input');
+                input.type = 'text';
+                input.value = nomeAtual;
+                input.classList.add('exercicio-nome');
+                input.onblur = () => {
+                    nomeSpan.textContent = input.value;
+                    nomeSpan.style.display = 'inline';
+                    input.remove();
+                };
+                input.onkeydown = (e) => {
+                    if (e.key === 'Enter') {
+                        input.blur();
+                    }
+                };
+                nomeSpan.style.display = 'none';
+                nomeSpan.parentNode.appendChild(input);
+                input.focus();
+            };
+        }
+        
+        // Função para abrir o modal de seleção de exercícios
+        function abrirModalExercicios(diaIndex) {
+            modalDiaIndex = diaIndex;
+            const diaDeTreino = treinoSemanalGerado[diaIndex];
+            const gruposDoDia = diaDeTreino.grupos_musculares;
+            const dificuldade = document.getElementById('dificuldade').value;
+            const sexo = document.getElementById('sexo').value;
+
+            const exerciciosFiltrados = EXERCICIOS.filter(ex => 
+                gruposDoDia.includes(ex.grupoMuscular) &&
+                ex.dificuldade.includes(dificuldade) &&
+                (!ex.sexoExclusivo || ex.sexoExclusivo === sexo)
+            );
+            
+            const exerciciosListDiv = document.getElementById('exerciciosList');
+            exerciciosListDiv.innerHTML = '';
+            
+            exerciciosFiltrados.forEach(ex => {
+                const sugestaoDiv = document.createElement('div');
+                sugestaoDiv.classList.add('exercicio-sugestao');
+                sugestaoDiv.textContent = `${ex.nome} (${ex.grupoMuscular})`;
+                sugestaoDiv.onclick = () => sugestaoDiv.classList.toggle('selected');
+                exerciciosListDiv.appendChild(sugestaoDiv);
+            });
+            
+            document.getElementById('exercicioModal').style.display = 'flex';
+        }
+
+        // Nova função para adicionar os exercícios selecionados de uma vez
+        function adicionarExerciciosSelecionados() {
+            if (modalDiaIndex === null) return;
+
+            const selectedExercises = document.querySelectorAll('.exercicio-sugestao.selected');
+            const dificuldade = document.getElementById('dificuldade').value;
+
+            selectedExercises.forEach(el => {
+                const nomeExercicio = el.textContent.split(' (')[0];
+                const exercicioOriginal = EXERCICIOS.find(ex => ex.nome === nomeExercicio);
+
+                if (exercicioOriginal) {
+                    const novoExercicio = {
+                        ...exercicioOriginal,
+                        sugerirRepeticoes: {
+                            [dificuldade]: exercicioOriginal.sugerirRepeticoes[dificuldade]
+                        },
+                        descanso: "60-90s"
+                    };
+                    treinoSemanalGerado[modalDiaIndex].treino.push(novoExercicio);
+                }
+            });
+
+            renderizarPreview(treinoSemanalGerado);
+            fecharModal();
+        }
+
+        // Função para fechar o modal
+        function fecharModal() {
+            document.getElementById('exercicioModal').style.display = 'none';
+            // Limpar seleção ao fechar
+            const selectedExercises = document.querySelectorAll('.exercicio-sugestao.selected');
+            selectedExercises.forEach(el => el.classList.remove('selected'));
+        }
+        
+        /**
+         * FUNÇÕES DE ACESSIBILIDADE PARA REORDENAÇÃO (NOVAS)
+         * Elas permitem mover os exercícios sem usar o mouse.
+         */
+        function moverExercicioParaCima(diaIndex, exercicioIndex) {
+            if (exercicioIndex > 0) {
+                const treinoDoDia = treinoSemanalGerado[diaIndex].treino;
+                // Troca a posição do item atual com o item anterior
+                [treinoDoDia[exercicioIndex], treinoDoDia[exercicioIndex - 1]] = [treinoDoDia[exercicioIndex - 1], treinoDoDia[exercicioIndex]];
+                renderizarPreview(treinoSemanalGerado);
+            }
+        }
+
+        function moverExercicioParaBaixo(diaIndex, exercicioIndex) {
+            const treinoDoDia = treinoSemanalGerado[diaIndex].treino;
+            if (exercicioIndex < treinoDoDia.length - 1) {
+                // Troca a posição do item atual com o item seguinte
+                [treinoDoDia[exercicioIndex], treinoDoDia[exercicioIndex + 1]] = [treinoDoDia[exercicioIndex + 1], treinoDoDia[exercicioIndex]];
+                renderizarPreview(treinoSemanalGerado);
+            }
+        }
+        
+        // Função de remoção agora recebe os índices diretamente
+        function removerExercicio(diaIndex, exercicioIndex) {
+            if (treinoSemanalGerado[diaIndex] && treinoSemanalGerado[diaIndex].treino[exercicioIndex]) {
+                 treinoSemanalGerado[diaIndex].treino.splice(exercicioIndex, 1);
+            }
+            renderizarPreview(treinoSemanalGerado);
+        }
+
+        function voltarParaFormulario() {
+            document.getElementById('formularioInicial').style.display = 'block';
+            document.getElementById('treinoPreview').style.display = 'none';
+            treinoSemanalGerado = []; // Limpa os dados do preview
+        }
+
+        // Funções de arrastar e soltar existentes (mantidas para usuários de mouse)
+        function drag(event, diaIndex, exercicioIndex) {
+            event.dataTransfer.setData("text/plain", JSON.stringify({ diaIndex, exercicioIndex }));
+            setTimeout(() => {
+                event.target.classList.add('dragging');
+            }, 0);
+        }
+
+        function allowDrop(event) {
+            event.preventDefault();
+            const targetElement = event.target.closest('.treino-item');
+            if (targetElement && !targetElement.classList.contains('drag-over')) {
+                const items = document.querySelectorAll('.treino-item.drag-over');
+                items.forEach(item => item.classList.remove('drag-over'));
+                targetElement.classList.add('drag-over');
+            }
+        }
+        
+        function drop(event, targetDiaIndex) {
+            event.preventDefault();
+            const data = JSON.parse(event.dataTransfer.getData("text/plain"));
+            const { diaIndex: sourceDiaIndex, exercicioIndex: sourceExercicioIndex } = data;
+            
+            const sourceItem = treinoSemanalGerado[sourceDiaIndex].treino[sourceExercicioIndex];
+            
+            let targetElement = event.target.closest('.treino-item');
+            let targetIndex;
+            
+            if (targetElement) {
+                targetIndex = Array.from(targetElement.parentNode.children).indexOf(targetElement);
+            } else {
+                targetIndex = treinoSemanalGerado[targetDiaIndex].treino.length;
+                if (event.target.classList.contains('adicionar-exercicio-btn')) {
+                    targetIndex--;
+                }
+            }
+            
+            const [movedItem] = treinoSemanalGerado[sourceDiaIndex].treino.splice(sourceExercicioIndex, 1);
+            
+            if (sourceDiaIndex === targetDiaIndex && targetIndex > sourceExercicioIndex) {
+                targetIndex--;
+            }
+            treinoSemanalGerado[targetDiaIndex].treino.splice(targetIndex, 0, movedItem);
+
+            renderizarPreview(treinoSemanalGerado);
+        }
+        
+        function gerarPdfTreinoSemanal(treino_semanal, dados_gerais, incluir_descricao, dados_nutricionais) {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF({ orientation: 'p', format: 'a4' });
+            
+            let y = 15;
+            const margin = 15;
+            const pageWidth = doc.internal.pageSize.getWidth();
+            const pageHeight = doc.internal.pageSize.getHeight();
+
+            doc.setFontSize(26);
+            doc.setFont("helvetica", "bold");
+            doc.setTextColor(30, 58, 95);
+            doc.text("Plano de Treino Semanal", pageWidth / 2, y, { align: "center" });
+            y += 12;
+            
+            doc.setFontSize(18);
+            doc.setTextColor(51, 51, 51);
+            doc.text(`Aluno: ${dados_gerais.nome_aluno}`, margin, y);
+            y += 10;
+            doc.setFontSize(16);
+            doc.setFont("helvetica", "normal");
+            doc.text(`Nível: ${dados_gerais.dificuldade} | Objetivo: ${dados_gerais.objetivo}`, margin, y);
+            y += 10;
+            doc.text(`Data de Criação: ${new Date().toLocaleDateString('pt-BR')}`, margin, y);
+            y += 20;
+
+            if (y > pageHeight - 50) {
+                 doc.addPage();
+                 y = 15;
+            }
+            doc.setFontSize(18);
+            doc.setFont("helvetica", "bold");
+            doc.setTextColor(30, 58, 95);
+            doc.text("Análise Nutricional", margin, y);
+            doc.line(margin, y + 2, pageWidth - margin, y + 2);
+            y += 8;
+            doc.setFontSize(16);
+            doc.setFont("helvetica", "normal");
+            doc.setTextColor(51, 51, 51);
+            const imc_classificacao = getIMCClassificacao(dados_nutricionais.imc);
+            doc.text(`IMC: ${dados_nutricionais.imc} (${imc_classificacao})`, margin, y);
+            doc.text(`TMB: ${dados_nutricionais.tmb} kcal/dia`, margin, y + 8);
+            doc.text(`Consumo Calórico Recomendado: ${dados_nutricionais.consumo} kcal/dia`, margin, y + 16);
+            doc.text(`Peso Ideal: ${dados_nutricionais.pesoIdeal} kg`, margin, y + 24);
+            doc.text(`Água Recomendada: ${dados_nutricionais.aguaRecomendada} ml/dia`, margin, y + 32);
+            y += 40;
+            
+            if (y > pageHeight - 40) {
+                doc.addPage();
+                y = 15;
+            }
+            doc.setFontSize(18);
+            doc.setFont("helvetica", "bold");
+            doc.setTextColor(30, 58, 95);
+            doc.text("Aquecimento (5-10 minutos)", margin, y);
+            doc.line(margin, y + 2, pageWidth - margin, y + 2);
+            y += 8;
+            doc.setFontSize(16);
+            doc.setFont("helvetica", "normal");
+            doc.setTextColor(51, 51, 51);
+            const aquecimentoText = "Inicie com 5 minutos de cardio leve (esteira, bicicleta) e depois faça alongamentos dinâmicos.";
+            const aquecimentoLinhas = doc.splitTextToSize(aquecimentoText, pageWidth - margin * 2);
+            doc.text(aquecimentoLinhas, margin, y);
+            y += (aquecimentoLinhas.length * 8) + 12;
+            
+            treino_semanal.forEach(dia => {
+                if (y > pageHeight - 60) {
+                    doc.addPage();
+                    y = 15;
+                }
+
+                doc.setFontSize(18);
+                doc.setFont("helvetica", "bold");
+                doc.setTextColor(30, 58, 95);
+                doc.text(`Treino ${dia.nome_dia}`, margin, y);
+                doc.line(margin, y + 2, pageWidth - margin, y + 2);
+                y += 8;
+                doc.setFontSize(16);
+                doc.setFont("helvetica", "normal");
+                doc.setTextColor(51, 51, 51);
+                doc.text(`Grupos musculares: ${dia.grupos_musculares.join(', ')}`, margin, y);
+                y += 10;
+
+                const bodyData = [];
+                let exercicioNum = 1;
+                dia.treino.forEach((item) => {
+                    const descanso = item.descanso || 'N/A';
+                    const reps = item.sugerirRepeticoes[dados_gerais.dificuldade] || 'N/A';
+                    
+                    let obs = '';
+                    if (item.tecnica) {
+                        obs = `Técnica: ${item.tecnica}`;
+                    }
+
+                    bodyData.push([exercicioNum++, item.nome, reps, descanso, obs]);
+                    
+                    if (incluir_descricao) {
+                        bodyData.push([{ content: `Descrição: ${item.descricao}`, colSpan: 5, styles: { fontSize: 10, fontStyle: 'italic' } }]);
+                    }
+                });
+
+                doc.autoTable({
+                    startY: y + 5,
+                    head: [['#', 'Exercício', 'Séries/Reps', 'Descanso', 'Observações']],
+                    body: bodyData,
+                    theme: 'striped',
+                    headStyles: { fillColor: [30, 58, 95], fontSize: 14 },
+                    alternateRowStyles: { fillColor: [248, 250, 252] },
+                    styles: { fontSize: 12, cellPadding: 3, overflow: 'linebreak' },
+                    columnStyles: {
+                        0: { cellWidth: 10 },
+                        1: { cellWidth: 'auto' }, // Changed to 'auto' to fix overflow
+                        2: { cellWidth: 35 },
+                        3: { cellWidth: 25 },
+                        4: { cellWidth: 'auto' } // Changed to 'auto' to fix overflow
+                    }
+                });
+                
+                y = doc.lastAutoTable.finalY + 10;
+            });
+            
+            if (y > pageHeight - 100) {
+                doc.addPage();
+                y = 15;
+            }
+            
+            doc.setFontSize(18);
+            doc.setFont("helvetica", "bold");
+            doc.setTextColor(30, 58, 95);
+            doc.text("Dicas para Maximizar seus Resultados", margin, y);
+            doc.line(margin, y + 2, pageWidth - margin, y + 2);
+            y += 10;
+            
+            // Dicas personalizadas com base no objetivo
+            const dicasPersonalizadas = gerarDicasPersonalizadas(dados_gerais.objetivo);
+            const dicasBody = dicasPersonalizadas.map(dica => [dica.titulo, dica.texto]);
+
+            doc.autoTable({
+                startY: y,
+                head: [['Tópico', 'Explicação']],
+                body: dicasBody,
+                theme: 'striped',
+                headStyles: { fillColor: [30, 58, 95], fontSize: 14 },
+                alternateRowStyles: { fillColor: [248, 250, 252] },
+                styles: { fontSize: 12, cellPadding: 3, overflow: 'linebreak' },
+                columnStyles: {
+                    0: { cellWidth: 50 },
+                    1: { cellWidth: 'auto' } // Changed to 'auto' to fix overflow
+                }
+            });
+            
+            y = doc.lastAutoTable.finalY + 10;
+
+            const tecnicasAplicadasNesteTreino = new Set();
+            treino_semanal.forEach(dia => {
+                dia.treino.forEach(exercicio => {
+                    if (exercicio.tecnica) {
+                        tecnicasAplicadasNesteTreino.add(exercicio.tecnica);
+                    }
+                });
+            });
+
+            if (tecnicasAplicadasNesteTreino.size > 0) {
+                if (y > pageHeight - (tecnicasAplicadasNesteTreino.size * 30 + 40)) {
+                    doc.addPage();
+                    y = 15;
+                }
+
+                doc.setFontSize(18);
+                doc.setFont("helvetica", "bold");
+                doc.setTextColor(30, 58, 95);
+                doc.text("Entendendo as Técnicas Avançadas", margin, y);
+                doc.line(margin, y + 2, pageWidth - margin, y + 2);
+                y += 10;
+
+                const tecnicasBody = [];
+                tecnicasAplicadasNesteTreino.forEach(tecnica => {
+                    if (DESCRICOES_TECNICAS[tecnica]) {
+                        tecnicasBody.push([tecnica, DESCRICOES_TECNICAS[tecnica]]);
+                    }
+                });
+
+                doc.autoTable({
+                    startY: y,
+                    head: [['Técnica', 'Descrição']],
+                    body: tecnicasBody,
+                    theme: 'striped',
+                    headStyles: { fillColor: [30, 58, 95], fontSize: 14 },
+                    alternateRowStyles: { fillColor: [248, 250, 252] },
+                    styles: { fontSize: 12, cellPadding: 3, overflow: 'linebreak' },
+                    columnStyles: {
+                        0: { cellWidth: 50 },
+                        1: { cellWidth: 'auto' } // Changed to 'auto' to fix overflow
+                    }
+                });
+                y = doc.lastAutoTable.finalY + 10;
+            }
+            
+            doc.setFontSize(12);
+            doc.setTextColor(150, 150, 150);
+            doc.text(`Gerado por Your Trainer Partner para: ${dados_gerais.nome_aluno} em ${new Date().toLocaleDateString('pt-BR')}`, pageWidth / 2, doc.internal.pageSize.getHeight() - 10, { align: "center" });
+            
+            doc.save(`treino_semanal_${dados_gerais.nome_aluno}.pdf`);
+        }
+
+        window.onload = function() {
+            adicionarDiaTreino();
+            const form = document.getElementById('treinoForm');
+            form.addEventListener('submit', function(e) { e.preventDefault(); });
+        };
     </script>
 </body>
 </html>
