@@ -763,7 +763,7 @@ const EXERCICIOS = [
     { "nome": "Elevação frontal na polia com corda", "grupoMuscular": "Ombro", "grupoExercicio": "Elevação Frontal", "subGrupo": "Anterior", "estilo": "Elevação", "tipo": "isolador", "dificuldade": ["Intermediario", "Avançado"], "sugerirRepeticoes": { "Iniciante": "Não recomendado", "Intermediario": "4x12-15", "Avancado": "5x10-12" }, "descricao": "Com corda na polia baixa, levante os braços à frente até o ombro e retorne." },
     { "nome": "Crucifixo invertido com halteres", "grupoMuscular": "Ombro", "grupoExercicio": "Crucifixo Invertido", "subGrupo": "Posterior", "estilo": "Isolador", "tipo": "isolador", "dificuldade": ["Intermediario", "Avançado"], "sugerirRepeticoes": { "Iniciante": "Não recomendado", "Intermediario": "4x12-15", "Avancado": "5x10-12" }, "descricao": "Inclinado à frente, abra os braços com halteres para trabalhar a parte posterior do ombro." },
     { "nome": "Crucifixo invertido na polia", "grupoMuscular": "Ombro", "grupoExercicio": "Crucifixo Invertido", "subGrupo": "Posterior", "estilo": "Isolador", "tipo": "isolador", "dificuldade": ["Intermediario", "Avançado"], "sugerirRepeticoes": { "Iniciante": "Não recomendado", "Intermediario": "4x12-15", "Avancado": "5x10-12" }, "descricao": "De frente para a polia, puxe os cabos lateralmente com braços estendidos." },
-    { "nome": "Posterior no peck-deck invertido", "grupoMuscular": "Ombro", "grupoExercicio": "Posterior Peck-Deck", "subGrupo": "Posterior", "estilo": "Isolador", "tipo": "isolador", "dificuldade": ["Iniciante", "Intermediario", "Avançado"], "sugerirRepeticoes": { "Iniciante": "3x15-20", "Intermediario": "4x12-15", "Avancado": "5x10-12" }, "descricao": "Sentado, abra os braços para trás contra resistência da máquina." },
+    { "nome": "Posterior no peck-deck invertido", "grupoMuscular": "Ombro", "grupoExercicio": "Posterior Peck-Deck", "subGrupo": "Posterior", "estilo": "Isolador", "tipo": "isolador", "dificuldade": ["Iniciante", "Intermediario", "Avancado"], "sugerirRepeticoes": { "Iniciante": "3x15-20", "Intermediario": "4x12-15", "Avancado": "5x10-12" }, "descricao": "Sentado, abra os braços para trás contra resistência da máquina." },
     { "nome": "Remada alta com barra", "grupoMuscular": "Ombro", "grupoExercicio": "Remada Alta", "subGrupo": "Completo", "estilo": "Puxada", "tipo": "composto", "dificuldade": ["Intermediario", "Avançado"], "sugerirRepeticoes": { "Iniciante": "Não recomendado", "Intermediario": "4x8-10", "Avancado": "5x6-8" }, "descricao": "Segure barra com pegada pronada, puxe até o peito, cotovelos elevados." },
     { "nome": "Remada alta com halteres", "grupoMuscular": "Ombro", "grupoExercicio": "Remada Alta", "subGrupo": "Completo", "estilo": "Puxada", "tipo": "composto", "dificuldade": ["Intermediario", "Avançado"], "sugerirRepeticoes": { "Iniciante": "Não recomendado", "Intermediario": "4x10-12", "Avancado": "5x8-10" }, "descricao": "Levante halteres lateralmente até o nível dos ombros, cotovelos altos." },
 
@@ -957,7 +957,7 @@ const EXERCICIOS = [
             `).join('');
 
             diaTreinoDiv.innerHTML = `
-                <h3>Treino Dia ${String.fromCharCode(64 + diaTreinoCount)}</h3>
+                <h3>Treino Dia ${diaTreinoCount}</h3>
                 <span class="remover" onclick="this.parentNode.remove()">x Remover</span>
                 <label for="nome_dia_${diaTreinoCount}">Nome do Treino (opcional):</label>
                 <input type="text" id="nome_dia_${diaTreinoCount}" name="nome_dia_${diaTreinoCount}" placeholder="Ex: Treino A">
@@ -1403,8 +1403,11 @@ const EXERCICIOS = [
                     gruposFormatados = gruposFormatados.substring(0, 80) + '...';
                 }
 
+                // Re-calcula o nome do treino com base no índice atual
+                const nomeTreino = dia.nome_dia.startsWith('Treino Dia ') ? `Treino Dia ${diaIndex + 1}` : dia.nome_dia;
+                
                 diaDiv.innerHTML = `
-                    <h3>${dia.nome_dia}</h3>
+                    <h3>${nomeTreino}</h3>
                     <p><strong>Grupos:</strong> ${gruposFormatados}</p>
                     <div class="treino-container" id="treino-dia-${diaIndex}" ondragover="allowDrop(event)" ondrop="drop(event, ${diaIndex})"></div>
                 `;
@@ -1593,7 +1596,15 @@ const EXERCICIOS = [
             if (treinoSemanalGerado[diaIndex] && treinoSemanalGerado[diaIndex].treino[exercicioIndex]) {
                  treinoSemanalGerado[diaIndex].treino.splice(exercicioIndex, 1);
             }
+            reordenarNomesDosTreinos();
             renderizarPreview(treinoSemanalGerado);
+        }
+
+        // Função para reordenar os nomes dos treinos
+        function reordenarNomesDosTreinos() {
+            treinoSemanalGerado.forEach((dia, index) => {
+                dia.nome_dia = `Treino Dia ${index + 1}`;
+            });
         }
 
         function voltarParaFormulario() {
@@ -1646,6 +1657,7 @@ const EXERCICIOS = [
             }
             treinoSemanalGerado[targetDiaIndex].treino.splice(targetIndex, 0, movedItem);
 
+            reordenarNomesDosTreinos();
             renderizarPreview(treinoSemanalGerado);
         }
         
